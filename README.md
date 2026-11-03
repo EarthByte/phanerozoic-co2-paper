@@ -29,7 +29,7 @@ The repository reproduces every result table, figure and number of the paper.
 The gridded inputs and outputs (NeuroLEM erosion fields and palaeoelevation of both surfaces at 0.1°, the
 published goSPL fields, HadCM3L temperature, the climate emulator coefficients, the 200-member elevation
 ensemble, the dynamic-topography surfaces, the direct goSPL comparison, the NeuroLEM weights, the larger result
-arrays and the supplementary videos) are in the companion Zenodo archive (DOI on publication). Extract it beside
+arrays and the supplementary videos) are in the companion Zenodo archive, https://doi.org/10.5281/zenodo.23909274. Extract it beside
 this repository as `neurolem_CO2_zenodo_data/`, or set `NEUROLEM_CO2_DATA`:
 
     working folder/
