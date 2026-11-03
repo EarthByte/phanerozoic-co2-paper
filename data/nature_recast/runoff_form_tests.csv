@@ -1,0 +1,6 @@
+configuration,S_sil_mean,S_sil_min,S_sil_max,S_net_mean,beyond_mean,beyond_480,beyond_0,Gamma_mean,F_sil_mean,max_abs_dS_sil_vs_main,max_abs_dS_net_vs_main
+pure West form (main model),0.1585,0.0727,0.3025,0.0496,0.4515,0.2267,0.6544,0.728,0.0714,0.0,0.0
+sulfide runoff exponent as published (-0.75),0.1585,0.0727,0.3025,0.0511,0.4545,0.2276,0.6584,0.728,0.0714,0.0,0.0252
+Sichuan reference converted to runoff (x0.62),0.1853,0.1021,0.3164,0.0794,0.4043,0.2009,0.6091,0.7046,0.0703,0.035,0.0402
+Sichuan set driven by precipitation,0.1895,0.1351,0.2957,0.0787,0.2826,0.1721,0.381,0.7008,0.0667,0.0824,0.0952
+Sichuan driven by precipitation + published sulfide exponent,0.1895,0.1351,0.2957,0.0809,0.2998,0.175,0.4137,0.7008,0.0667,0.0824,0.082

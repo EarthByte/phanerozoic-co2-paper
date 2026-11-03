@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software or its data, please cite the paper and the data archive."
+title: "Mountain uplift did not strengthen the weathering CO2 sink over 540 million years: analysis and figure code"
+abstract: >-
+  Analysis and figure code for a study of the erosion sensitivity of continental weathering
+  CO2 fluxes over the Phanerozoic, using NeuroLEM, a neural-network emulator of the global
+  landscape evolution model goSPL, two palaeoelevation histories at 109 ages, and the
+  field-calibrated weathering laws of Bufe et al. (2024).
+type: software
+license: MIT
+version: "2.0.0"
+date-released: "2026-11-03"
+repository-code: "https://github.com/EarthByte/phanerozoic-co2-paper"
+keywords:
+  - silicate weathering
+  - erosion
+  - carbon cycle
+  - Phanerozoic
+  - palaeotopography
+  - landscape evolution
+  - neural surrogate
+authors:
+  - family-names: "Müller"
+    given-names: "R. Dietmar"
+    orcid: "https://orcid.org/0000-0002-3334-5764"
+    affiliation: "EarthByte Group, School of Geosciences, University of Sydney, Australia"
+  - family-names: "Bufe"
+    given-names: "Aaron"
+    orcid: "https://orcid.org/0000-0002-8551-7265"
+    affiliation: "Department of Earth and Environmental Sciences, Ludwig-Maximilians-Universität München, Germany"
+  - family-names: "Caves Rugenstein"
+    given-names: "Jeremy K."
+    affiliation: "Department of Geosciences, Colorado State University, USA"
+  - family-names: "Hilton"
+    given-names: "Robert G."
+    affiliation: "School of Geography and the Environment, University of Oxford, UK"
+  - family-names: "Zhou"
+    given-names: "Jianping"
+    affiliation: "College of Marine Geosciences, Ocean University of China, Qingdao, China"
+  - family-names: "Dutkiewicz"
+    given-names: "Adriana"
+    affiliation: "EarthByte Group, School of Geosciences, University of Sydney, Australia"

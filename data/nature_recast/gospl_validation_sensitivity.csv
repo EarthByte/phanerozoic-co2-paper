@@ -1,0 +1,401 @@
+age,case,neurolem_source,paired_run,metric,goSPL,NeuroLEM,difference,relative_difference
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,146.8117168057013,146.48488695684296,0.32682984885835253,0.0022311506370935597
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,16.12915924174945,17.117207099399355,-0.9880478576499065,-0.057722492455242747
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.04903886847928943,0.051115758152839454,-0.0020768896735500267,-0.04063110376530055
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.12262960800968681,0.1302878545928415,-0.007658246583154699,-0.058779435789216516
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.014906287762153168,0.015893551714170343,-0.0009872639520171755,-0.06211726426994624
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.10772332024753364,0.11439430287867117,-0.006670982631137523,-0.0583156893592236
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.04966868300462709,0.053218629503044686,-0.003549946498417597,-0.06670495898836515
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.1683987980632771,0.14365481647143297,0.024743981591844127,0.17224609797030155
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.07613502655173379,0.04736783400085383,0.028767192550879964,0.6073149249417109
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.03195176247432602,-0.061080585329243285,0.029128822854917268,-0.4768916783934516
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.4488756079912083,0.4857166560731973,-0.036841048081989014,-0.07584884648558787
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6355240459491569,0.684204683281656,-0.048680637332499055,-0.071149231395219
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7178254438361642,0.7365266092693925,-0.018701165433228306,-0.025391024842645105
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.07975813468029232,0.07984769905234491,-8.956437205259737e-05,-0.0011216900814371433
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1683987980632771,0.14365481647143297,0.024743981591844127,0.17224609797030155
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.07613502655173379,0.04736783400085383,0.028767192550879964,0.6073149249417109
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.4488756079912083,0.4857166560731973,-0.036841048081989014,-0.07584884648558787
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.12262960800968681,0.1302878545928415,-0.007658246583154699,-0.058779435789216516
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.10772332024753364,0.11439430287867117,-0.006670982631137523,-0.0583156893592236
+60,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,16.12915924174945,17.117207099399355,-0.9880478576499065,-0.057722492455242747
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,153.34581585460361,153.15529401949897,0.19052183510464715,0.0012439781224957702
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,18.510087336444546,20.330506594527776,-1.8204192580832306,-0.08954126399256679
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.054496840640179504,0.05771476858287872,-0.0032179279426992127,-0.05575571074287944
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.12740763794734777,0.1379485615619995,-0.010540923614651726,-0.07641198643390146
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.01663133670322531,0.018451878166375894,-0.0018205414631505823,-0.09866429025464085
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.11077630124412247,0.11949668339562361,-0.008720382151501144,-0.07297593459251195
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.05515314552193062,0.06179674914259587,-0.006643603620665253,-0.10750733190406425
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.16172651394562854,0.1246357688763244,0.03709074506930414,0.29759310191369814
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.060715955852414016,0.014363367660627418,0.0463525881917866,3.2271392953929183
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.05330722995803234,-0.10279364011118976,0.04948641015315742,-0.4814150963000142
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.46873293546204775,0.529158768375239,-0.06042583291319126,-0.11419225480988693
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6526563801537327,0.7225000623864699,-0.06984368223273718,-0.09666944803027211
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7235671247022722,0.7520870143115029,-0.028519889609230686,-0.03792099726032261
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.07220684585191474,0.07118038848469252,0.0010264573672222194,0.0144205080791735
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1618125491428319,0.12626582120966523,0.03554672793316668,0.28152296157913637
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.06331887729496775,0.017615638315355904,0.04570323897961185,2.5944696502863267
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.468155700634588,0.5266417635660822,-0.058486062931494165,-0.11105473773189545
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.12158731891948465,0.13207987923311645,-0.010492560313631799,-0.07944101989306629
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.10606551527583112,0.11459748902601888,-0.008531973750187757,-0.07445166401726833
+60,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,17.112663324478987,19.2117444792948,-2.0990811548158135,-0.10926030986296276
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,152.52728504637994,152.32636380547314,0.2009212409068084,0.0013190181652560362
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,18.147297726131562,19.91086615659801,-1.7635684304664494,-0.08857316485360645
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.05372927531332122,0.05679379539831935,-0.0030645200849981277,-0.05395871262882379
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.12641815646727061,0.1370253469523745,-0.01060719048510389,-0.07741042603446646
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.016354159705481066,0.01812064445516929,-0.0017664847496882234,-0.09748465370856596
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.11006399676178955,0.11890470249720522,-0.008840705735415677,-0.07435118670452479
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.05422629238536246,0.06064787705840217,-0.006421584673039708,-0.1058830907940258
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.16286512420934576,0.12672265780199163,0.036142466407354135,0.2852091885874737
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.0630688169035049,0.018257735376656307,0.04481108152684859,2.454361431053626
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.04995453904059071,-0.09750551074520566,0.047550971704614954,-0.48767471029275167
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.46645931356536796,0.52334384062143,-0.05688452705606206,-0.10869436619052608
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6507452879040616,0.7195289307751959,-0.06878364287113425,-0.09559538182436822
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7226396623720464,0.7503309604667782,-0.02769129809473181,-0.03690544513517757
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.07307837246725642,0.07219417129245885,0.0008842011747975664,0.012247542411916612
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1630474136426231,0.12895633166523865,0.034091081977384446,0.26436144342165724
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.06550280555359565,0.022228846987298448,0.043273958566297205,1.946747781881081
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.46552308381632795,0.5200847930203957,-0.05456170920406772,-0.10490925698327047
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.12106051220443412,0.13197142761990183,-0.010910915415467709,-0.0826763460261477
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.10571075113664913,0.11470875881065097,-0.008998007674001843,-0.0784422023853889
+60,qnet_p05,ensemble member 197,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,16.88321218701878,18.918059126256743,-2.034846939237962,-0.10756108360047134
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,154.57939945444554,154.39922389720894,0.18017555723659484,0.0011669460032814882
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,18.805369257666843,20.59033039579832,-1.7849611381314752,-0.08668929074084775
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.05488031627824294,0.05795669524879988,-0.003076378970556938,-0.053080648531640406
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.12886994481876696,0.1391158078071542,-0.010245862988387255,-0.07364988314333287
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.016870309315534227,0.018665327066587554,-0.0017950177510533266,-0.09616856670390495
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.11199963550323273,0.12045048074056666,-0.008450845237333929,-0.07016032800679195
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.055944980948866053,0.0625185921204632,-0.006573611171597153,-0.10514650040312601
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.1621628925993022,0.1256739546223046,0.03648893797699759,0.29034606324484624
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.06089562543622148,0.015166018009806884,0.04572960742641459,3.0152679099315467
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.05351657204453336,-0.10250844069958653,0.04899186865505317,-0.4779300935679025
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.4699025662300276,0.5279637828063058,-0.058061216576278274,-0.1099719686597882
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6534972004686237,0.7204501098727811,-0.06695290940415743,-0.09293205523416481
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7232780356719655,0.7513531906128373,-0.02807515494087187,-0.03736612194056499
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.07188878691085704,0.07087687232571037,0.0010119145851466699,0.014277077302402352
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1610771275600382,0.12531906835600992,0.035758059204028275,0.2853361397680183
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.06193536933821134,0.015715804413814503,0.046219564924396835,2.9409608129106597
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.47032072369665245,0.5277397201159718,-0.05741899641931936,-0.10880173356423017
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.12190989936793024,0.1317973198670612,-0.009887420499130953,-0.07501989045834934
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.10627196072752594,0.11424237420976603,-0.00797041348224009,-0.06976757562483094
+60,qnet_p95,ensemble member 22,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,17.27082807381191,19.321779539904842,-2.0509514660929327,-0.10614713110959306
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,155.50449518499406,167.5029960607615,-11.998500875767434,-0.07163155978066804
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,10.750715031047752,11.073130672664991,-0.3224156416172388,-0.02911693640653501
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.03382049971775247,0.0336227261959487,0.0001977735218037721,0.005882138189841513
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.06964901220320463,0.07407079150413597,-0.004421779300931336,-0.059696666002069576
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.009780666905077893,0.01018499546643221,-0.00040432856135431613,-0.03969845275699002
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.059868345298126735,0.06388579603770375,-0.0040174507395770165,-0.06288488191030794
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.03343503539657909,0.03487303354977133,-0.0014379981531922395,-0.04123524703234971
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.1486907329880497,0.14311873036880826,0.0055720026192414285,0.0389327281263796
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.03597427165518466,0.03210677955293665,0.003867492102248009,0.12045717932785527
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.07223828917851392,-0.07457321756386542,0.0023349283853515007,-0.03131054903661412
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.46892956653180967,0.48179466400378457,-0.012865097471974896,-0.026702449057995015
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6353202441402466,0.645943366292913,-0.010623122152666475,-0.016445903320646882
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7307660128318286,0.7344255699185273,-0.0036595570866986282,-0.004982883544080052
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.06796244419313685,0.07017265986599162,-0.0022102156728547734,-0.03149682051493574
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1486907329880497,0.14311873036880826,0.0055720026192414285,0.0389327281263796
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.03597427165518466,0.03210677955293665,0.003867492102248009,0.12045717932785527
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.46892956653180967,0.48179466400378457,-0.012865097471974896,-0.026702449057995015
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.06964901220320463,0.07407079150413597,-0.004421779300931336,-0.059696666002069576
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.059868345298126735,0.06388579603770375,-0.0040174507395770165,-0.06288488191030794
+220,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,10.750715031047752,11.073130672664991,-0.3224156416172388,-0.02911693640653501
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,165.89720038266782,169.7777619132255,-3.880561530557685,-0.022856712721546324
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,18.635843282754568,21.594316378882194,-2.9584730961276264,-0.1370023965667566
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.054517319370767155,0.06178154906345636,-0.007264229692689209,-0.11757927411674407
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.08495963710285417,0.09182252112201643,-0.006862884019162255,-0.07474074916808982
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.015266186724025707,0.01809090842512499,-0.0028247217010992833,-0.1561404012844516
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.06969345037882847,0.07373161269689144,-0.004038162318062963,-0.05476839811796508
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.05075406443335776,0.0613618201876579,-0.01060775575430014,-0.17287224730067163
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.1287084420562882,0.07591718599440034,0.052791256061887865,0.6953795161188108
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,-0.02520610399872924,-0.11232204679000524,0.08711594279127599,-0.7755907702977136
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.15526365038430995,-0.259479154639014,0.10421550425470405,-0.4016334352548978
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.5118281143779403,0.5881312096669815,-0.07630309528904122,-0.1297382183343857
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6726144909846531,0.7457319743873583,-0.07311748340270519,-0.09804793935887413
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.748988721665575,0.7917666959579994,-0.04277797429242447,-0.05402850929548786
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.047824999837894275,0.04460680637042698,0.003218193467467295,0.0721457940912098
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1290914059822578,0.07509421866448185,0.053997187317775946,0.7190591802950019
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,-0.009810481674925603,-0.10915666926251012,0.09934618758758453,-0.9101247615816085
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.5130789417490387,0.5880687642771744,-0.07498982252813569,-0.1275187989627532
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.07252145036395492,0.08832996844381909,-0.015808518079864164,-0.17897117318590383
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.06060935167282591,0.07125562388494414,-0.010646272212118224,-0.14940957122638732
+220,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,13.924893293949856,20.21055325170087,-6.2856599577510135,-0.3110088021574584
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,166.90332319596777,170.79908160517948,-3.895758409211709,-0.022809012628166037
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,18.337711189149193,21.01746566805593,-2.6797544789067373,-0.12750131348993465
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.05336717899370449,0.05964978340367803,-0.006282604409973545,-0.10532484866636005
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.08470465766946898,0.09161062210833153,-0.006905964438862544,-0.07538388322149037
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.01506404355835008,0.01768469381121475,-0.002620650252864669,-0.14818748239807145
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.06964061411111891,0.07392592829711678,-0.004285314185997868,-0.05796767500537425
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.050069608398863916,0.06002023381962662,-0.009950625420762707,-0.16578784832239113
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.13016348307097902,0.07867940020472299,0.05148408286625604,0.6543527623786529
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,-0.021544452310470374,-0.1041896502796269,0.08264519796915652,-0.7932188825603232
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.1504317133610001,-0.24933678563719638,0.09890507227619627,-0.39667260498060053
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.5078606995805134,0.5787405001150275,-0.07087980053451415,-0.12247250800734777
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6694984932481616,0.737819805870389,-0.0683213126222274,-0.09259891382507734
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7478509780523319,0.7893808854647101,-0.041529907412378164,-0.05261073352178958
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.0484566672847057,0.04572533161748528,0.002731335667220419,0.05973353435835915
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1303805343205528,0.07769597535918289,0.05268455896136991,0.6780860748296549
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,-0.006171373363190962,-0.10090496714284379,0.09473359377965283,-0.9388397465661468
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.5090446288717568,0.5792255530223653,-0.0701809241506085,-0.12116337717562442
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.07249198714941096,0.08838379094253616,-0.0158918037931252,-0.17980450514345392
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.06073750531511041,0.07167875857496293,-0.010941253259852526,-0.1526428955714958
+220,qnet_p05,ensemble member 98,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,13.691354249833216,19.675250458152277,-5.983896208319061,-0.30413316572748805
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,167.750080045834,171.63214155367774,-3.88206150784373,-0.02261849949958017
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,18.949964331466724,21.884410157525064,-2.93444582605834,-0.13408841293578644
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.05471679695946121,0.061651192777871164,-0.006934395818409954,-0.11247788576280326
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.0847221353208146,0.09218552128320091,-0.0074633859623863125,-0.08096050072178063
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.015410523724933692,0.018297896637210303,-0.002887372912276611,-0.15779807753449082
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.06931161159588091,0.07388762464599061,-0.004576013050109698,-0.06193206334665957
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.05108720705257347,0.06199627416764029,-0.010909067115066819,-0.17596326975340948
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.12968731079748275,0.0754558311326587,0.05423147966482404,0.7187182070724238
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,-0.026136286022759154,-0.11458103894753414,0.088444752924775,-0.7718969363270761
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.15575783617915978,-0.26158427364330905,0.10582643746414927,-0.4045596319312835
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.5103228343359922,0.5868189867913951,-0.07649615245540287,-0.13035732342892992
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6723262947291945,0.7456185725687633,-0.07329227783956882,-0.09829728031997165
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7482278274849024,0.792140574236114,-0.043912746751211595,-0.05543554790582217
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.04690075936716507,0.04418951634836311,0.002711243018801962,0.06135489235564795
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1287877975699942,0.07457409931945924,0.05421369825053496,0.7269775799543385
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,-0.011319735676122548,-0.11147530808317312,0.10015557240705057,-0.8984552196287563
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.5140978922244116,0.587729285128066,-0.07363139290365439,-0.12528113668457097
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.07232793922891645,0.08845506613909292,-0.016127126910176467,-0.1823199915403042
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.06036197891622842,0.07122647213216114,-0.010864493215932719,-0.15253448459125685
+220,qnet_p95,ensemble member 84,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,14.038708855055056,20.437416611460282,-6.398707756405226,-0.3130878955032482
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,188.0084399148287,187.9095324407448,0.09890747408388734,0.0005263568739657387
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,8.858420205908653,9.402409567229585,-0.5439893613209321,-0.05785637792432585
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.02360807506300811,0.024429646755948983,-0.0008215716929408749,-0.03363010939733746
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.062415200691883936,0.06623782422653739,-0.0038226235346534507,-0.057710584236279394
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.008285837248078015,0.00886482943904948,-0.0005789921909714647,-0.06531340449947187
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.05412936344380592,0.057372994787487905,-0.0032436313436819825,-0.05653585551349616
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.028214555296479468,0.030291806548904468,-0.0020772512524249998,-0.06857469029030638
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.16508611582824081,0.1437057794530202,0.021380336375220604,0.14877854221729603
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.06251306340622799,0.03673526907480101,0.025777794331426983,0.7017178580872181
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.029286894222902638,-0.05265607485271036,0.02336918062980772,-0.4438078739286212
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.3930388858511884,0.4652661898206158,-0.07222730396942739,-0.15523866885164117
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.5489520353251903,0.6290456062906249,-0.08009357096543457,-0.1273255391413236
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7157149996649945,0.7312520147116871,-0.015537015046692582,-0.021247141524551427
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.07391379003427058,0.07390235388334362,1.1436150926955047e-05,0.00015474677498095168
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.16508611582824081,0.1437057794530202,0.021380336375220604,0.14877854221729603
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.06251306340622799,0.03673526907480101,0.025777794331426983,0.7017178580872181
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.3930388858511884,0.4652661898206158,-0.07222730396942739,-0.15523866885164117
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.062415200691883936,0.06623782422653739,-0.0038226235346534507,-0.057710584236279394
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.05412936344380592,0.057372994787487905,-0.0032436313436819825,-0.05653585551349616
+240,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,8.858420205908653,9.402409567229585,-0.5439893613209321,-0.05785637792432585
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,189.72354605092264,189.73911244268882,-0.015566391766185461,-8.204102762887633e-05
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,13.71228251992091,15.203671503065278,-1.4913889831443683,-0.09809400202074103
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.034275507688707935,0.04099610317525693,-0.006720595486548998,-0.16393254397420853
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.07766844487939786,0.08048654034791618,-0.002818095468518314,-0.0350132513627327
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.012012255846517694,0.013516794039042806,-0.0015045381925251119,-0.11130880504499097
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.06565618903288017,0.06696974630887337,-0.0013135572759931935,-0.01961418921814173
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.04057410624557551,0.046637789904482974,-0.006063683658907464,-0.13001653104330746
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.1511115565489542,0.06877051309943988,0.08234104344951432,1.19733065435257
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.026081610445385584,-0.08769026103889695,0.11377187148428253,-1.2974288152000883
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.08630512208129489,-0.21064610552346202,0.12434098344216714,-0.5902837991387307
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.44213698624655806,0.5713052854946972,-0.1291682992481391,-0.22609330340133538
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6039487933914924,0.7328974977936072,-0.1289487044021148,-0.1759437094413826
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7285185536771195,0.793251370495865,-0.06473281681874554,-0.0816044185064323
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.05941912266618422,0.05553492128565315,0.0038842013805310688,0.06994160233976077
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.1531098988004095,0.07013213940889455,0.08297775939151496,1.1831630988429716
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.031861444898114974,-0.08398175004036493,0.1158431949384799,-1.3793853412533212
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.4386081563170071,0.5682106972420566,-0.12960254092504953,-0.22808887892133278
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.07679677375942308,0.07947644472857505,-0.002679670969151976,-0.033716543037418
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.0652026817648863,0.06627723195161418,-0.0010745501867278767,-0.016212961149499328
+240,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,13.115357013158777,14.796155885938177,-1.6807988727794,-0.11359699679676805
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,189.3782311277535,189.41133206170295,-0.03310093394944147,-0.00017475688275425671
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,13.45287864531242,14.750768833892623,-1.2978901885802028,-0.08798796884390592
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.034106470194622304,0.040019913304786596,-0.005913443110164292,-0.14776251675330376
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.07671814055793724,0.07969859434927118,-0.002980453791333937,-0.03739656659780466
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.011796095842159243,0.013152997750898175,-0.001356901908738932,-0.1031629393114033
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.064922044715778,0.066545596598373,-0.001623551882594998,-0.024397585499063568
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.03988083236566125,0.045376395934920384,-0.005495563569259135,-0.12111062273744633
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.15452293204672718,0.07388218737098033,0.08064074467574685,1.0914774933615616
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.0309877383603223,-0.07820051199644958,0.10918825035677188,-1.396260044457627
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.08137759060127774,-0.199412912938215,0.11803532233693727,-0.5919141373432957
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.4402603527767056,0.5631181352225372,-0.12285778244583156,-0.21817408241927727
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6012578242130889,0.7267657484877872,-0.12550792427469826,-0.17269377999148694
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7257672603648889,0.7889744010979324,-0.06320714073304345,-0.0801130437756723
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.059823831109324876,0.05667967911634572,0.003144151992979155,0.055472296985400904
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.15662708475163573,0.07578686214283216,0.08084022260880357,1.0666785815257471
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.03696757503094538,-0.0734945963206688,0.11046217135161418,-1.5029971845773513
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.43654653722811565,0.5595978779562661,-0.1230513407281505,-0.21989243629291821
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.07588620986333217,0.0788086152904778,-0.0029224054271456273,-0.037082309039107475
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.06450647443062582,0.06597664260895385,-0.0014701681783280268,-0.022283161437022025
+240,qnet_p05,ensemble member 176,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,12.858089882317326,14.333120573026866,-1.4750306907095396,-0.10291064553558293
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,189.56551095286974,189.58740771167595,-0.021896758806207117,-0.00011549690493950493
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,14.34616086007425,15.875803091447484,-1.5296422313732343,-0.09635054192611359
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.03615588017564859,0.04320542505779768,-0.007049544882149095,-0.16316341924002897
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.0774187599166348,0.08014864598544569,-0.0027298860688108884,-0.03406028929430216
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.012378351527543132,0.013972268300494759,-0.001593916772951627,-0.11407716618891339
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.06504040838909167,0.06617637768495092,-0.0011359692958592543,-0.017165782347098535
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.041662478230786226,0.04808634633484431,-0.006423868104058081,-0.1335902723680884
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.1459474734232856,0.06332138015036783,0.08262609327291777,1.3048687990803023
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.015119800861439148,-0.10150692032518326,0.1166267211866224,-1.1489533995613501
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,-0.09908610378075342,-0.22770963635469954,0.12862353257394613,-0.5648576609801061
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.4493103027240954,0.5766582437981924,-0.12734794107409703,-0.22083780548304066
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.6110913698108199,0.737113491192567,-0.12602212138174707,-0.1709670530895553
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.7325862625011862,0.7979538783800743,-0.06536761587888806,-0.0819190402477783
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.056611138960015406,0.05296047411154028,0.0036506648484751283,0.06893187626656161
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.14789447644759537,0.06461925561489948,0.0832752208326959,1.2887059753361636
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.021196884980983925,-0.09755723276079446,0.11875411774177838,-1.2172764066910102
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.44597077350714737,0.5737316798757558,-0.12776090636860843,-0.2226840714047299
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.0765528951538247,0.0791434018103789,-0.002590506656554206,-0.03273180830362643
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.06462075966074798,0.06551433832433473,-0.0008935786635867471,-0.013639436594215515
+240,qnet_p95,ensemble member 168,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,13.693614512040911,15.42322137121776,-1.7296068591768492,-0.11214303533272085
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,86.86622633030284,86.73429826305733,0.13192806724551076,0.001521059948457637
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,8.096651987627046,8.191925345835292,-0.0952733582082459,-0.011630154595669295
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.04350186702528283,0.04277658350192477,0.0007252835233580585,0.016955153123096478
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.0815478906736391,0.08752053840035794,-0.0059726477267188355,-0.06824281289721146
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.007676240961418836,0.007894000585303195,-0.00021775962388435877,-0.027585458289650644
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.07387164971222027,0.07962653781505474,-0.005754888102834477,-0.0722734939977061
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.023626914360830073,0.024354271456847685,-0.0007273570960176119,-0.029865688953430003
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.2793754370940813,0.2818750085986272,-0.0024995715045458833,-0.008867659169121689
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.22263744326598167,0.2280122502638477,-0.005374806997866022,-0.023572448373482047
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.1352407074139897,0.14389975461473495,-0.008659047200745257,-0.06017416238080642
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.22521438360802973,0.22481291400341563,0.0004014696046140964,0.001785794229810067
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.3444385930760219,0.34525493199414203,-0.0008163389181201075,-0.0023644525898733892
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.6377342050845834,0.635072472520284,0.0026617325642994683,0.004191226481186305
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.10565708811033744,0.11207670977696517,-0.006419621666627726,-0.05727881983155014
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.2793754370940813,0.2818750085986272,-0.0024995715045458833,-0.008867659169121689
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.22263744326598167,0.2280122502638477,-0.005374806997866022,-0.023572448373482047
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.22521438360802973,0.22481291400341563,0.0004014696046140964,0.001785794229810067
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.0815478906736391,0.08752053840035794,-0.0059726477267188355,-0.06824281289721146
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.07387164971222027,0.07962653781505474,-0.005754888102834477,-0.0722734939977061
+460,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,8.096651987627046,8.191925345835292,-0.0952733582082459,-0.011630154595669295
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,109.25648619197383,109.19655534166333,0.05993085031050782,0.0005488346232442876
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,12.191330493694355,12.533051057263169,-0.3417205635688134,-0.0272655526581278
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.05066345235750224,0.05111541698015189,-0.00045196462264964626,-0.008842041195225803
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.1067932618986425,0.11647401186331917,-0.009680749964676674,-0.08311510705097813
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.01115831687426043,0.011768913314619186,-0.0006105964403587561,-0.05188214272937852
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.09563494502438206,0.10470509854869998,-0.00907015352431792,-0.08662571020931942
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.034415178570628854,0.03677219009857223,-0.0023570115279433757,-0.06409766515470317
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.2510834223098251,0.2218868233876462,0.029196598922178907,0.13158329312404082
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.1840580100070437,0.1535256950109807,0.030532314996062987,0.19887429914503363
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.08995297687182463,0.060372059400445995,0.029580917471378636,0.489976949024868
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.2868725698913101,0.305798074491333,-0.018925504600022902,-0.06188889394252639
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.41914658882219,0.45397310403722785,-0.03482651521503782,-0.07671493069814528
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.659656002816321,0.6818463470312262,-0.022190344214905178,-0.032544493802045604
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.09189335870546245,0.0974907932087973,-0.005597434503334858,-0.05741500626984086
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.2681342691626572,0.2571254581148999,0.011008811047757305,0.04281493994592278
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.2083999795812805,0.19651209834190397,0.011887881239376535,0.06049439876568452
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.2368123951959364,0.25258274815620607,-0.015770352960269685,-0.06243638203871604
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.08430286581217919,0.09120951461924742,-0.006906648807068233,-0.07572289838291457
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.07615128989458861,0.08244660095212213,-0.0062953110575335175,-0.07635622311693957
+460,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,8.663015049377066,9.253294092560093,-0.5902790431830276,-0.06379123340061443
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,108.33921734311453,108.26728640879958,0.07193093431494901,0.0006643829055006378
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,11.983002710412809,12.26655018978438,-0.2835474793715722,-0.023115503135324178
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.050478905014630426,0.05066455312164115,-0.00018564810701072326,-0.0036642602287441095
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.10557647962059782,0.11418386332649606,-0.008607383705898239,-0.07538178736592915
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.010988111790891942,0.011516585777896843,-0.0005284739870049012,-0.04588807804646167
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.09458836782970588,0.10266727754859922,-0.008078909718893343,-0.0786902108616746
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.03392279910249225,0.035936701957731576,-0.0020139028552393287,-0.056040280424399125
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.25028652999596146,0.22677655864015148,0.023509971355809983,0.1036702007332051
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.18341970849108286,0.15910407010470784,0.024315638386375016,0.15282851262304398
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.0893063775144224,0.06598405624481339,0.02332232126960901,0.35345388866484306
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.28373812148047245,0.30200724263823914,-0.018269121157766688,-0.06049232792622272
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.4177563222551824,0.4436329339377104,-0.025876611682528028,-0.058328878906364734
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.6602043089839319,0.6783265906375525,-0.01812228165362062,-0.0267161598907506
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.09242573166370602,0.09765032003474043,-0.005224588371034414,-0.053503033775779696
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.2694848345947051,0.26696325697515977,0.0025215776195453565,0.009445410758454953
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.20981571318551862,0.20772267498522634,0.0020930382002922743,0.010076118076378204
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.23568801688029198,0.24515007205626074,-0.009462055175968764,-0.03859699120870452
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.0828848605646321,0.08932709503702102,-0.006442234472388925,-0.0721196012219919
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.07485984750255953,0.08078362232147819,-0.005923774818918662,-0.07332890812131465
+460,qnet_p05,ensemble member 154,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,8.53669850250562,9.0208831920815,-0.4841846895758799,-0.0536737566894665
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,109.34960801971428,109.2960207912751,0.05358722843918429,0.0004902944137510357
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,12.631855067440469,13.18353941046424,-0.551684343023771,-0.04184645153682176
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.05236859842239093,0.05368393727209267,-0.0013153388497017388,-0.02450153465896232
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.10842325513437406,0.11881382894385027,-0.010390573809476208,-0.08745256256648914
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.011506513401212996,0.012304976764836294,-0.0007984633636232974,-0.0648894653669767
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.09691674173316106,0.10650885217901399,-0.009592110445852925,-0.09005927910790978
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.03550579745032134,0.03856292444957868,-0.003057126999257337,-0.07927632675407059
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.24691534989377298,0.20919885787600187,0.03771649201777111,0.180290143075861
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.17817303453515737,0.13734942725407806,0.04082360728107931,0.29722444495935973
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.08248797330183763,0.04167667328265524,0.040811300019182394,0.9792360283268342
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.2906629497485426,0.3181636456094852,-0.02750069586094256,-0.08643569509100035
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.4226051300549052,0.4727258032424091,-0.050120673187503906,-0.10602483055447376
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.6630466601259395,0.6917423579766244,-0.02869569785068493,-0.04148321628679941
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.09004232195032716,0.09454234021107774,-0.004500018260750582,-0.047597914867600344
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.26478000909866145,0.24534686432543903,0.019433144773222416,0.07920681940098251
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.20400451226914532,0.1816653986614051,0.022339113607740213,0.12296845614159424
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.23949581802480388,0.26454494187465744,-0.025049123849853555,-0.09468759323972231
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.0849125636805493,0.09233060158501018,-0.0074180379044608835,-0.08034213767827547
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.07662103200908729,0.08323554317472531,-0.006614511165638021,-0.07946738752882354
+460,qnet_p95,ensemble member 130,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,8.837797509965949,9.667274309494267,-0.8294767995283188,-0.0858025512644951
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,80.74786601934528,80.65841761863018,0.0894484007150993,0.0011089778767794378
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,5.252964864600556,5.432178241120542,-0.1792133765199857,-0.03299107072065033
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.030216909213440335,0.030901637624633185,-0.0006847284111928496,-0.022158321170882567
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.059478593687723326,0.06578926772003608,-0.006310674032312759,-0.09592254559159419
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.005175164723643983,0.005464856684247519,-0.00028969196060353586,-0.05300998312335892
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.054303428964079345,0.06032441103578857,-0.006020982071709223,-0.09981004320352438
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.016030476377868332,0.016988168857054706,-0.0009576924791863742,-0.056374085238072746
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.28678971892322064,0.28685864671014705,-6.892778692640933e-05,-0.00024028485010618716
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.23560584741842483,0.23825894886213675,-0.0026531014437119194,-0.011135369548058716
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.1589245992650906,0.1653075045277337,-0.006382905262643124,-0.03861231394714004
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.2416897596088236,0.2673135493982367,-0.0256237897894131,-0.09585668159020044
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.3547828254259674,0.3943140444991591,-0.03953121907319168,-0.10025313484180498
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.6301644834956127,0.6293100120594628,0.0008544714361499173,0.0013577909452824333
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.11878116313974749,0.12704934165351084,-0.008268178513763352,-0.06507848373045755
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.28678971892322064,0.28685864671014705,-6.892778692640933e-05,-0.00024028485010618716
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.23560584741842483,0.23825894886213675,-0.0026531014437119194,-0.011135369548058716
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.2416897596088236,0.2673135493982367,-0.0256237897894131,-0.09585668159020044
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.059478593687723326,0.06578926772003608,-0.006310674032312759,-0.09592254559159419
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.054303428964079345,0.06032441103578857,-0.006020982071709223,-0.09981004320352438
+520,reference,"main run, reference surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,5.252964864600556,5.432178241120542,-0.1792133765199857,-0.03299107072065033
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,100.42856075812354,100.39527001694219,0.03329074118134656,0.0003315967094439376
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,9.33987928600573,9.9907028422633,-0.6508235562575706,-0.06514292002604816
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.041901723594811195,0.04436290577792132,-0.0024611821831101235,-0.0554783808669046
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.09319886737222059,0.10269548266575028,-0.009496615293529687,-0.09247354457098123
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.008866010964135364,0.009651737978462681,-0.0007857270143273171,-0.08140782686813752
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.08433285640808523,0.0930437446872876,-0.00871088827920237,-0.0936214283773611
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.027484807872112257,0.030414792647144723,-0.0029299847750324653,-0.09633420188079189
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.2535104441661074,0.21798899345676206,0.03552145070934534,0.1629506616185692
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.19328307065714467,0.15453110770620423,0.03875196295094044,0.25077127528663024
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.10712373253867698,0.06802092922478689,0.039102803313890086,0.5748642919103344
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.29831905758815797,0.35845747683594065,-0.06013841924778268,-0.16777002331941016
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.4345896105040388,0.5138047536555669,-0.07921514315152806,-0.15417362838303084
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.6569094352643787,0.6834538231987946,-0.026544387934415825,-0.03883859747858187
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.10467928544925506,0.10783175580552358,-0.003152470356268519,-0.02923508323423807
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.2549635394014682,0.21966592551575506,0.03529761388571315,0.16068770703893942
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.19380304137799512,0.1525367079264784,0.04126633345151673,0.27053378830888897
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.295005974281511,0.36695932790044733,-0.07195335361893634,-0.19607991444342465
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.06590798750290423,0.07340634827801995,-0.007498360775115717,-0.10214866903222519
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.05954685951983549,0.066146499267544,-0.006599639747708511,-0.09977307674310654
+520,central,"main run, adjusted surface",CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,6.672900314673387,7.577299233156046,-0.9043989184826584,-0.11935636836476948
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,100.6825718921766,100.67129670400844,0.011275188168156092,0.00011200002917721719
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,8.688210853286215,9.337066714945326,-0.6488558616591114,-0.06949247354316568
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.038941577557450556,0.041395572978207604,-0.0024539954207570477,-0.05928159086115159
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.09068299067893178,0.10003253022774031,-0.00934953954880853,-0.09346499111361861
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.008359938979757902,0.009113845090811905,-0.0007539061110540032,-0.08272097051704896
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.08232305169917388,0.0909186851369284,-0.008595633437754518,-0.09454199018396536
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.026098308706349042,0.02881973696113912,-0.0027214282547900794,-0.09442932315654673
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.2668665296655905,0.23608151619222398,0.030785013473366513,0.13039993121825133
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.21005807223467146,0.1767277360582035,0.03333033617646797,0.18859708679508547
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.12528096066296224,0.09199320962964667,0.03328775103331556,0.3618500883633471
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.29344439259528066,0.34661982707882866,-0.053175434483548,-0.15341140445337187
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.42735303010283315,0.49975805291419606,-0.0724050228113629,-0.14488015228399775
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.646075286690551,0.6688044168430392,-0.02272913015248812,-0.03398471897027322
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.10949312738399795,0.11238857642276044,-0.0028954490387624876,-0.025762841126049874
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.2579002331041252,0.22258232411841714,0.03531790898570805,0.15867346666269144
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.19760898015102452,0.15646117951003918,0.04114780064098533,0.2629904796182694
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.2944771871830107,0.3624107132976941,-0.0679335261146834,-0.18744900087675098
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.06524708660436444,0.0729640923869466,-0.007717005782582151,-0.10576443192984519
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.05900072748059246,0.06581165479243596,-0.006810927311843504,-0.10349120278656654
+520,qnet_p05,ensemble member 150,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,6.533213482320888,7.446825415699555,-0.9136119333786672,-0.12268475254604083
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,land_Mkm2,100.12563517717498,100.10508634585085,0.020548831324134653,0.00020527259976721446
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt,9.79016331194982,10.504374543586378,-0.7142112316365576,-0.06799179034154212
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,E_mean_eroding_mm,0.04402989896201948,0.046792214997438936,-0.002762316035419453,-0.05903366693734502
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil,0.09422328498446043,0.10308675993195061,-0.00886347494749018,-0.08598073072954393
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sulf,0.009190906741184633,0.010030402113248392,-0.0008394953720637591,-0.08369508645669688
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net,0.08503237824327581,0.09305635781870222,-0.008023979575426415,-0.0862270968208233
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_ocp,0.028353108643089174,0.03147575097129613,-0.0031226423282069565,-0.09920787373920348
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil,0.24989889263427043,0.21409151681103128,0.035807375823239146,0.16725266071539235
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net,0.18762185461882222,0.14764114815370938,0.03998070646511284,0.27079650195817284
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_total_rel_sil,0.1000632074636704,0.05878855385765912,0.04127465360601128,0.7020865610327292
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding,0.2996670534174788,0.3623140792205276,-0.06264702580304882,-0.17290806346202692
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_oc_frac_eroding,0.4350002862357917,0.5143665978054711,-0.07936631156967944,-0.15429911644397853
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,Gamma_sil,0.6601106451789918,0.6872342336470868,-0.02712358846809504,-0.039467749335117874
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,WI,0.10096240402588817,0.10294945914445498,-0.0019870551185668106,-0.019301268166728724
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_sil_common,0.2523695532593859,0.2175590553012778,0.034810497958108116,0.16000482218449696
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,S_net_common,0.18984012454236796,0.1480661685824055,0.041773955959962444,0.28213032294891427
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,beyond_frac_eroding_common,0.29645117369711355,0.36761368200044003,-0.07116250830332649,-0.19357959670075964
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_sil_common,0.06576556566579103,0.07317338422397433,-0.007407818558183302,-0.10123651703068592
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,F_net_common,0.0593158795830353,0.06573491609670562,-0.006419036513670318,-0.09765033402076584
+520,qnet_p95,ensemble member 131,CO2_paper/data/nature_recast/gospl_surfaces/kin_bridge_s2,D_Gt_common,6.806659470765404,7.8341362772614,-1.0274768064959954,-0.1311538081713296

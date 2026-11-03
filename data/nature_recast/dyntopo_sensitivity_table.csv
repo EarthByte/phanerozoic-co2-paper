@@ -1,0 +1,9 @@
+quantity,shoreline_mean,shoreline_min,shoreline_max,free_mean,free_min,free_max,free_common_land_mean,free_common_land_min,free_common_land_max,climate_width_median,adjusted_minus_reference_mean,climate_width_of_mean,ensemble_width_median,ensemble_width_of_mean
+Silicate sink (%),0.0555115,-5.04263,18.9269,5.82676,-1.57364,25.2734,-2.78112,-8.18619,16.6736,61.7497,3.56059,,,
+Net inorganic sink (%),-1.47071,-7.96387,17.3518,4.18945,-5.69994,23.8716,,,,,,,,
+Silicate sensitivity S_sil,-0.0226032,-0.0635591,-0.00146415,-0.0264418,-0.0718228,-0.000752879,-0.0257786,-0.0693102,-0.00674166,0.0196235,-0.0235859,0.0182721,0.0036339,0.00171756
+Net sensitivity S_net,-0.0390827,-0.10801,-0.00227418,-0.0438337,-0.119202,0.00119396,,,,,,,,
+Share of eroding land beyond the optimum (pp),3.56091,0.0706264,8.79234,4.31658,-0.196601,10.3002,4.07273,0.883094,9.57861,5.32704,3.73055,4.06191,0.671777,0.276537
+Lowland share beyond the optimum (pp),3.75652,0.0810046,9.1667,4.21414,0.911197,9.93383,,,,,,,,
+Lowland median E/E_opt (ratio),1.10474,1.00162,1.29537,1.11504,1.02262,1.31201,,,,,,,,
+Erosion flux (%),11.5735,-0.258934,33.7448,17.8108,0.151102,45.7414,,,,,,,,

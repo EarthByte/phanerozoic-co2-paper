@@ -1,0 +1,18 @@
+key,label,ref_lat,ref_lon,plate,age_old,age_young,age,lat,lon,radius,area_hi_Mkm2,used,note
+pan_african,East African (Pan-African),-7.0,36.0,709,540,500,540,-28.23,178.25,10.0,0.246,0,less than 0.3 M km2 of eroding land above 1500 m at every age of its range
+taconic,Taconic,44.0,-73.5,101,480,440,460,-28.14,-54.23,10.0,0.012,0,less than 0.3 M km2 of eroding land above 1500 m at every age of its range
+lachlan,Lachlan,-35.0,148.0,801,450,380,430,3.94,174.15,10.0,0.026,0,less than 0.3 M km2 of eroding land above 1500 m at every age of its range
+acadian,Acadian,46.0,-68.0,101,410,370,390,-36.23,-15.86,10.0,0.98,1,
+variscan,Variscan,50.0,13.0,305,345,295,320,-1.96,18.34,10.0,1.257,1,
+alleghanian,Alleghanian,37.0,-81.0,101,325,280,280,-1.41,-14.04,10.0,1.311,1,
+gondwanide,Gondwanide,-33.5,20.5,701,285,230,280,-58.5,-45.77,10.0,0.623,1,
+uralian,Uralian,60.0,59.0,301,300,250,275,33.2,45.55,10.0,0.773,1,
+caob,Central Asian,43.0,85.0,407,320,250,260,39.08,74.23,10.0,1.238,1,
+indosinian,Indosinian,33.5,108.0,611,250,195,210,42.51,103.91,10.0,2.877,1,
+mongol_okhotsk,Mongol-Okhotsk,52.0,118.0,401,185,140,140,56.56,117.56,10.0,1.908,1,
+sevier,Sevier,40.0,-114.0,132,125,70,80,47.53,-82.43,10.0,1.655,1,
+alpine,Alpine,46.5,10.0,307,40,0,40,41.74,8.12,10.0,0.372,1,
+caledonian,,,,,,,,,,,,1,window and age of Fig. 4 (orogen_tracks.BELTS)
+central_pangaean,,,,,,,,,,,,1,window and age of Fig. 4 (orogen_tracks.BELTS)
+himalaya_tibet,,,,,,,,,,,,1,window and age of Fig. 4 (orogen_tracks.BELTS)
+central_andes,,,,,,,,,,,,1,window and age of Fig. 4 (orogen_tracks.BELTS)

@@ -1,0 +1,20 @@
+test,subset,n,metric,paleomap,adjusted,change_pct
+held-out rock chemistry,"land, within 150 km of a training sample",1610,RMS (m),1805.0,1222.0,-32.3
+held-out rock chemistry,"land, within 150 km of a training sample",1610,bias (m),-961.0,-306.0,
+held-out rock chemistry,"land, within 150 km of a training sample",1610,correlation,0.36,0.63,
+held-out rock chemistry,"land, all distances",7894,RMS (m),1905.0,1621.0,-14.9
+held-out rock chemistry,"land, all distances",7894,bias (m),-1060.0,-679.0,
+held-out rock chemistry,"land, all distances",7894,correlation,0.3,0.42,
+held-out rock chemistry,"land, all distances, 5-95 Ma",2709,RMS (m),1776.0,1521.0,-14.3
+held-out rock chemistry,"land, all distances, 5-95 Ma",2709,bias (m),-632.0,-474.0,
+held-out rock chemistry,"land, all distances, 5-95 Ma",2709,correlation,0.51,0.63,
+held-out rock chemistry,"land, all distances, 100-245 Ma",3065,RMS (m),1959.0,1568.0,-20.0
+held-out rock chemistry,"land, all distances, 100-245 Ma",3065,bias (m),-1293.0,-642.0,
+held-out rock chemistry,"land, all distances, 100-245 Ma",3065,correlation,-0.03,0.22,
+held-out rock chemistry,"land, all distances, 250-540 Ma",2120,RMS (m),1985.0,1808.0,-8.9
+held-out rock chemistry,"land, all distances, 250-540 Ma",2120,bias (m),-1269.0,-993.0,
+held-out rock chemistry,"land, all distances, 250-540 Ma",2120,correlation,0.09,0.19,
+sedimentary basins (GST-1),"world, 540-5 Ma",3823,"AUC, > 2 km of sediment",0.662,0.662,
+sedimentary basins (GST-1),"world, 540-5 Ma",3823,share of > 2 km ground above 500 m (%),3.4,5.1,
+sedimentary basins (GST-1),"world, 250-5 Ma",3936,"AUC, > 2 km of sediment",0.715,0.716,
+sedimentary basins (GST-1),"world, 250-5 Ma",3936,share of > 2 km ground above 500 m (%),11.1,12.8,

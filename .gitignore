@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# the companion data archive and caches belong beside the repository, not in it
+neurolem_CO2_zenodo_data/
+*.pt
+*.zip
+# third-party data fetched by scripts
+data/octopus/
+data/martin_lamb/
