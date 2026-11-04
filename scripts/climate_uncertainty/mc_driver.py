@@ -317,22 +317,20 @@ class StubSurrogate:
 
 
 def _load_model_class():
-    """Import the GlobalUNet class from salles_unet.py (NeuroLEM surrogate code).
+    """Import the GlobalUNet class from paleomap_unet.py, the NeuroLEM model definition in scripts/.
 
-    Uses the module if it is importable, otherwise looks in a sibling
-    neurolem-surrogate checkout, the parent directory and this directory.
+    Uses the module if it is importable, otherwise adds scripts/ (the parent directory) to the path.
     """
     try:
-        from salles_unet import GlobalUNet
+        from paleomap_unet import GlobalUNet
         return GlobalUNet
     except ModuleNotFoundError:
-        for c in (HERE.parents[2] / "neurolem-surrogate" / "neurolem",
-                  HERE.parents[1], HERE):
-            if (c / "salles_unet.py").exists():
+        for c in (HERE.parents[1], HERE):
+            if (c / "paleomap_unet.py").exists():
                 sys.path.insert(0, str(c))
-                from salles_unet import GlobalUNet
+                from paleomap_unet import GlobalUNet
                 return GlobalUNet
-        raise SystemExit("cannot locate salles_unet.py (neurolem-surrogate checkout)")
+        raise SystemExit("cannot locate paleomap_unet.py (scripts/ of this repository)")
 
 
 def _device():

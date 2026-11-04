@@ -120,7 +120,7 @@ python3 collate_ensemble_sensitivity.py                      # runs automaticall
 
 The generator needs a Python with pyGPlates (`PALEOTOPO_PY`) and the palaeoelevation-assimilation code and its
 production grids (`PALEO_ROOT`, `PALEO_CENTRAL_DIR`), released separately; NeuroLEM needs a Python with PyTorch
-(`NEUROLEM_PY`), the model definition `salles_unet.py` (released separately) and, from the data archive,
+(`NEUROLEM_PY`), the model definition `scripts/paleomap_unet.py` and, from the data archive,
 `gospl_salles/` and `surrogate_model/best.pt`.
 
 ## Climate states, direct goSPL runs and further tests

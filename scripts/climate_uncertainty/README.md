@@ -196,7 +196,7 @@ python mc_driver.py nodes --erodep-dir <data>/surrogate_erodep --temp-dir <data>
 python mc_driver.py sample --nodes mc_nodes.npz --n 2000 --seed 0 --data-dir ../../data --out mc_bands
 ```
 
-`nodes` needs PyTorch and the NeuroLEM model definition `salles_unet.py` (released separately) on the Python
+`nodes` needs PyTorch and the NeuroLEM model definition `scripts/paleomap_unet.py` on the Python
 path; `<data>` is the data archive.
 
 **Reference-node check.** The `(r = 0, z = 0)` node is the unperturbed forcing, so the surrogate output there must

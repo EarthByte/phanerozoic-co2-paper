@@ -65,15 +65,16 @@ BAND = ['D_Gt', 'F_sil', 'F_net', 'F_ocp', 'S_sil', 'S_net', 'S_total_rel_sil', 
 
 
 def _register_unet(path):
-    """Load salles_unet.py by file location (--unet-py), for machines on which more than one file of that name is
-    importable, so that the network definition matching the checkpoint is used."""
+    """Load the model file by location (--unet-py), so that a chosen network definition is used whatever else is
+    importable. A directory must hold paleomap_unet.py, or salles_unet.py as the file is named in the NeuroLEM package."""
     f = Path(path)
-    f = f / 'salles_unet.py' if f.is_dir() else f
+    if f.is_dir():
+        f = f / 'paleomap_unet.py' if (f / 'paleomap_unet.py').exists() else f / 'salles_unet.py'
     if not f.exists():
         raise SystemExit(f'--unet-py: no such file: {f}')
-    spec = importlib.util.spec_from_file_location('salles_unet', f)
+    spec = importlib.util.spec_from_file_location('paleomap_unet', f)
     mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    sys.modules['salles_unet'] = mod
+    sys.modules['paleomap_unet'] = mod
     print(f'GlobalUNet from {f}')
 
 
@@ -277,7 +278,7 @@ def main():
     q.add_argument('--sensitivity', default=str(cfg.SENS))
     q.add_argument('--envelope-csv', default=str(cfg.REPO / 'data' / 'pco2_envelope.csv'))
     q.add_argument('--ckpt', default=str(cfg.ZENODO / 'surrogate_model' / 'best.pt'))
-    q.add_argument('--unet-py', help='salles_unet.py to load by file location (pass it where the module is not importable)')
+    q.add_argument('--unet-py', help='model file (paleomap_unet.py) to load by file location; default: the one in scripts/')
     q.add_argument('--device')
     q.add_argument('--n-r', type=int, default=9); q.add_argument('--n-z', type=int, default=3); q.add_argument('--z-max', type=float, default=2.5)
     q.add_argument('--sigma-terms', default='int,fit,struct')

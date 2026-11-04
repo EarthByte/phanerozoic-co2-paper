@@ -633,7 +633,7 @@ def main():
     q.add_argument('--out', default=str(OUT_CSV))
     q.add_argument('--main-run', default=str(cfg.OUT / 'kin_bridge_s2'))
     q.add_argument('--ckpt', default=str(cfg.ZENODO / 'surrogate_model' / 'best.pt'))
-    q.add_argument('--unet-py', help='salles_unet.py to load by file location')
+    q.add_argument('--unet-py', help='model file (paleomap_unet.py) to load by file location')
     q.add_argument('--device')
     q.add_argument('--reference-tolerance', type=float, default=1e-5, help='RMSE allowed against the archived erosion field (archive units)')
     q.add_argument('--workers', type=int, default=3, help='CPU threads for the weathering step')

@@ -22,15 +22,14 @@ together.
 | `NEUROLEM_CO2_DATA` | the extracted data archive (default: `neurolem_CO2_zenodo_data/` beside the repository) |
 | `NEUROLEM_PY` | Python with PyTorch, for the GPU steps (default: `python3` on the PATH) |
 | `ANALYSIS_PY` | Python for tables and figures (default `python3`; `NEUROLEM_PY` if `python3` lacks numpy, pandas, scipy or matplotlib) |
-| `PYTHONPATH` | must include the directory holding `salles_unet.py`, the NeuroLEM model definition, for every step that runs NeuroLEM |
 | `PALEO_ROOT` | the palaeoelevation-assimilation code and its outputs, for the steps that need them (below) |
 | `PALEOMAP_PLATE_DIR` | PALEOMAP rotations and plate polygons, for the plate-model tracking of mountain belts |
 
 GPU steps use CUDA or Apple-silicon MPS, with the CPU as a fallback; the times below were measured on an
 Apple-silicon GPU. CPU steps need the packages of `requirements.txt`; some steps need more and say so.
 
-The NeuroLEM model definition and the palaeoelevation-assimilation code are released separately. The steps
-that need them are marked "NeuroLEM" and "assimilation" in the table.
+NeuroLEM inference uses the model definition in `scripts/paleomap_unet.py` and the weights of the data archive. The
+palaeoelevation-assimilation code is released separately; the steps that need it are marked "assimilation" in the table.
 
 ## Order of work
 
@@ -126,5 +125,5 @@ retained; Supplementary Information). Their NeuroLEM counterparts on the same su
 | the ensemble's parity check fails, or `The archive and --central-dir are not the same surface` | `PALEO_CENTRAL_DIR` does not hold the production grids of the archived surface |
 | `unperturbed state does not reproduce the archived ... erosion field` | the checkpoint or the archive differ from the published ones: `./run_uncertainty_m3.sh archive-check` |
 | `raw not found` (step `gospl`) | pass the run bundle: `./run_uncertainty_m3.sh gospl --gadi-root /path/to/bundle` |
-| `cannot locate salles_unet.py` | put the NeuroLEM model definition on `PYTHONPATH` |
+| `cannot locate paleomap_unet.py` | run the scripts from the repository, which holds it in `scripts/` |
 | `main run made with sulfide exponent ...` | re-run `./run_uncertainty_m3.sh main` |

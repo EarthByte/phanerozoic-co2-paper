@@ -56,9 +56,10 @@ Apple-silicon MPS); the plate-model tracking of mountain belts needs pyGPlates.
 
 ## Dependencies outside this repository
 
-Two components are released separately. The NeuroLEM model definition (`salles_unet.py`) is needed only to
-re-run NeuroLEM inference (the elevation ensemble, the climate states, the dynamic-topography test and the archive
-check); the trained weights are in the data archive. The palaeoelevation-assimilation code (modules
+The NeuroLEM model definition used for this study is included (`scripts/paleomap_unet.py`); with the trained weights
+of the data archive (`surrogate_model/best.pt`) it re-runs NeuroLEM inference for the elevation ensemble, the
+climate states, the dynamic-topography test and the archive check. Training code and the rest of NeuroLEM are
+released separately, as is the palaeoelevation-assimilation code (modules
 `assimilate_scotese`, `paths_scotese`, `plate_model_utils_scotese` and `sw_io`) is imported only by
 `build_geochem_elevation_ensemble.py`; its output grids are read by the ensemble and dynamic-topography steps
 (`PALEO_ROOT`, see `RUNBOOK.md`).

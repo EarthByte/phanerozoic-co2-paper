@@ -57,7 +57,7 @@ import numpy as np
 import _config as cfg                       # adds ../ (apply_geochem_ensemble, apply_dem) to the path
 _SURROGATE = Path(os.environ.get('NEUROLEM_SURROGATE', cfg.REPO.parent / 'neurolem-surrogate' / 'neurolem'))
 if str(_SURROGATE) not in sys.path:
-    sys.path.append(str(_SURROGATE))        # salles_unet.GlobalUNet
+    sys.path.append(str(_SURROGATE))        # optional NeuroLEM checkout; paleomap_unet.py itself is in scripts/
 
 import weathering_core as wc
 import run_weathering as rw

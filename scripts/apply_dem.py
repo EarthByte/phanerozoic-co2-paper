@@ -112,41 +112,33 @@ import numpy as np
 def _load_model_class(explicit=None):
     """Import GlobalUNet from an explicit file, an installed package, or a checkout.
 
-    ``explicit`` is an absolute path to ``salles_unet.py`` (or its directory) and is
-    loaded directly by file location, bypassing sys.path entirely, so the run does
-    not depend on PYTHONPATH reaching a detached process or on where the NeuroLEM
-    checkout lives. Without it, an importable ``salles_unet`` is used, then a
-    ``neurolem-surrogate/neurolem`` checkout two levels above this file, then this
-    file's own directory. Returns the ``GlobalUNet`` class.
+    ``explicit`` is an absolute path to the model file (or its directory, which must hold
+    ``paleomap_unet.py``, or ``salles_unet.py`` as the file is named in the NeuroLEM package) and
+    is loaded directly by file location, bypassing sys.path entirely, so the run does not depend
+    on PYTHONPATH reaching a detached process. Without it, ``paleomap_unet.py`` beside this file
+    (the model definition shipped with this repository) is used. Returns the ``GlobalUNet`` class.
     """
     if explicit:
         import importlib.util
         from pathlib import Path as _P
         f = _P(explicit)
         if f.is_dir():
-            f = f / "salles_unet.py"
+            f = f / "paleomap_unet.py" if (f / "paleomap_unet.py").exists() else f / "salles_unet.py"
         if not f.exists():
             raise SystemExit(f"--unet-py: no such file: {f}")
-        spec = importlib.util.spec_from_file_location("salles_unet", f)
+        spec = importlib.util.spec_from_file_location("paleomap_unet", f)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         print(f"[apply_dem] GlobalUNet loaded from {f}")
         return mod.GlobalUNet
     try:
-        from salles_unet import GlobalUNet
+        from paleomap_unet import GlobalUNet
         return GlobalUNet
     except ModuleNotFoundError:
         import sys
-        candidates = [
-            Path(__file__).resolve().parents[2] / "neurolem-surrogate" / "neurolem",
-            Path(__file__).resolve().parent,
-        ]
-        for candidate in candidates:
-            if (candidate / "salles_unet.py").exists():
-                sys.path.insert(0, str(candidate))
-                from salles_unet import GlobalUNet
-                return GlobalUNet
-        raise
+        sys.path.insert(0, str(Path(__file__).resolve().parent))   # scripts/, which holds paleomap_unet.py
+        from paleomap_unet import GlobalUNet
+        return GlobalUNet
 
 
 def _device():
@@ -293,7 +285,7 @@ def main():
                     help="smoothstep taper distance from the target goSPL coastline for "
                          "delta-fixed-mask mode (default: 100 km; 0 gives a binary mask)")
     ap.add_argument("--unet-py",
-                    help="absolute path to salles_unet.py (or its directory); loaded by "
+                    help="absolute path to the model file paleomap_unet.py (or its directory); loaded by "
                          "file location, so PYTHONPATH is not involved")
     ap.add_argument("--ages", nargs="*", type=int)
     a = ap.parse_args()

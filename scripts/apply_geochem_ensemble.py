@@ -112,7 +112,7 @@ def _load_model(ckpt_path, device):
     factor the padded grid must be divisible by.
     """
     import torch
-    from salles_unet import GlobalUNet
+    from paleomap_unet import GlobalUNet
 
     ck = torch.load(ckpt_path, map_location=device, weights_only=False)
     model = GlobalUNet(in_ch=ck["in_ch"], depth=ck["depth"],
