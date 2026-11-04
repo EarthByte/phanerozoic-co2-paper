@@ -115,12 +115,12 @@
 | dyntopo controls, 5-250 Ma mean change S_sil / share pp | real: -0.0226 / +3.56; tsh075: -0.0216 / +3.63; tsh150: -0.0192 / +3.35; tsh225: -0.0226 / +3.79; lon060: -0.0160 / +3.74; lon120: -0.0140 / +2.44; lon180: -0.0106 / +2.18 |
 | constant 560 ppm: silicate sink 350->285 Ma; 190->105 Ma (simulated forcing in brackets) | -39% (-41%); +83% (+92%) |
 | constant 560 ppm: r(log sink, log simulated sink), 109 ages; r(sink, gross degassing) 0-300 Ma | 0.98; 0.87 |
-| events: number shown; raised largely from the sea (land before < 50%) | 13; caledonian, acadian, indosinian, alpine |
-| events, fixed climate: a_sulf; a_ocp (all) | 0.78 to 1.04; 0.83 to 0.96 |
-| events, fixed climate: a_sil raised from sea; standing land (n in 0.10-0.22) | 0.49 to 0.84; -0.06 to 0.56 (6 of 9) |
-| events, t C km-2 yr-1: exposure raised from sea; exposure standing land; climate standing land | 0.14 to 1.40; -0.28 to 0.06; -0.10 to 0.88 |
-| events, standing land: climate larger than exposure; climate reversed sign; exposure with OC < 0 | 7; 4; 8 of 9 |
+| events: number shown; raised largely from the sea (land before < 50%) | 13; caledonian, indosinian, alpine |
+| events, fixed climate: a_sulf; a_ocp (all) | 0.77 to 1.05; 0.83 to 0.97 |
+| events, fixed climate: a_sil raised from sea; standing land (n in 0.10-0.22) | 0.50 to 0.86; -0.06 to 0.52 (5 of 10) |
+| events, t C km-2 yr-1: exposure raised from sea; exposure standing land; climate standing land | 0.16 to 1.39; -0.28 to 0.12; -0.17 to 0.89 |
+| events, standing land: climate larger than exposure; climate reversed sign; exposure with OC < 0 | 7; 6; 10 of 10 |
 | held-out rock chemistry, land, within 150 km of a training sample: RMS PALEOMAP -> adjusted (m, %); bias; r (n) | 1805 -> 1222 (-32%); -961 -> -306; 0.36 -> 0.63 (1610) |
 | held-out rock chemistry, land, all distances: RMS PALEOMAP -> adjusted (m, %); bias; r (n) | 1905 -> 1621 (-15%); -1060 -> -679; 0.30 -> 0.42 (7894) |
 | GST-1 basins (> 2 km): AUC PALEOMAP / adjusted, 540-5 and 250-5 Ma; share held above 500 m (%) | world, 540-5 Ma: 0.662 / 0.662; world, 540-5 Ma: 3.4 / 5.1; world, 250-5 Ma: 0.715 / 0.716; world, 250-5 Ma: 11.1 / 12.8 |
-| NeuroLEM erosion fields: main, ensemble, climate, dynamic topography; total | main 218, ensemble 21,800, climate 5,886, dyntopo 714; total 28,618 |
+| NeuroLEM erosion fields: main, ensemble, climate, dynamic topography; total | main 218, climate 5,886, dyntopo 714; total 6,818 |

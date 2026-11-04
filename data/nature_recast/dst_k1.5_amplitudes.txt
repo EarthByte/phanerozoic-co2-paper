@@ -1,3 +1,3 @@
-{'Taiwan': {'sil': 0.5811632954295919, 'sulf': 0.14898137347248777}, 'Sichuan': {'sil': 0.5875210598491473, 'sulf': 0.7925451479684197}, 'NewZealand': {'sil': 3.3653785995661205, 'sulf': 2.601409592188902}}
+{'Taiwan': {'sil': 0.5811632954295919, 'sulf': 0.07449068673624389}, 'Sichuan': {'sil': 0.5875210598491473, 'sulf': 0.39627257398420984}, 'NewZealand': {'sil': 3.3653785995661205, 'sulf': 1.300704796094451}}
 {'ocp': 0.0043943887486007135, 'ocb': 0.9554534379766231}
 mode=kinetic qsrc=bridge scale=2.0 oc_form=declining beta_sulf=0.0 qref_scale=none driver={'Taiwan': 'runoff', 'Sichuan': 'runoff', 'NewZealand': 'runoff'} stretch=1.5

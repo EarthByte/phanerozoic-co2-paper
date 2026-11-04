@@ -4,7 +4,14 @@ model land cell, in ascending latitude and longitude -180..180 with one wrap col
 
 Writes ONE table, data/nature_recast/hadcm3l_runoff_ratio_filled.npz (ages, lat, lon, ratio), from
 hadcm3l_runoff_scotese_spinupa.npz. Bilinear interpolation of this table (_evaluate.ratio_at) is the
-runoff-ratio field of build_cache.py; the table lets experiments run where scipy is not installed."""
+runoff-ratio field of build_cache.py; the table lets experiments run where scipy is not installed.
+
+The ratio is (surface + subsurface runoff) / precipitation, limited to 0-1; arrays: ages (109), lat (73),
+lon (98, including the two wrap columns), ratio (109 x 73 x 98, float32). Run once after
+fetch_bridge_runoff.py; run_uncertainty_m3.sh runs it automatically when the table is missing.
+
+    python3 fill_runoff_ratio.py
+"""
 import numpy as np
 from scipy import ndimage
 import _config as cfg
@@ -12,18 +19,21 @@ from _evaluate import RATIO_FILLED
 
 with np.load(cfg.RUNOFF) as r:
     ages, la, lo, P, R = r['ages'], r['lat'].astype(float), r['lon'].astype(float), r['precip'].astype(float), r['runoff'].astype(float)
+# the model grid runs north to south and over 0-360 E; reorder to ascending latitude and longitude -180..180
 flip = la[0] > la[-1]
 lo2 = np.where(lo >= 180, lo - 360, lo); o = np.argsort(lo2); lo2 = lo2[o]
 out = []
 for k in range(ages.size):
     land = np.isfinite(R[k])
     ratio = np.where(land, np.clip(R[k] / np.maximum(P[k], 1e-12), 0.0, 1.0), np.nan)
+    # nearest-land fill over the ocean, on three copies side by side so that the search is periodic in longitude
     t = np.concatenate([ratio, ratio, ratio], axis=1)
     idx = ndimage.distance_transform_edt(~np.isfinite(t), return_distances=False, return_indices=True)
     f = t[tuple(idx)][:, lo.size:2 * lo.size]
     if flip:
         f = f[::-1]
     f = f[:, o]
+    # one wrap column on either side, so that bilinear interpolation works across the dateline
     out.append(np.concatenate([f[:, -1:], f, f[:, :1]], axis=1).astype(np.float32))
 lat = la[::-1] if flip else la
 lon = np.concatenate([[lo2[-1] - 360], lo2, [lo2[0] + 360]])

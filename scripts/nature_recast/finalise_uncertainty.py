@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Bring the three uncertainty experiments together: one figure, one table of statements.
 
-Reads whatever is complete of
+Methods, "Uncertainty and sensitivity"; the statements file holds the numbers that paragraph and the
+Supplementary Information quote. Reads, from data/nature_recast/, the main-model table (kin_bridge_s2_ens.csv)
+and whatever is complete of
   ensemble_sensitivity_age_summary.csv / ensemble_sensitivity_headline.csv   (palaeoelevation ensemble)
   climate_sensitivity_bands.csv / climate_sensitivity_headline.csv           (27 climate states)
   gospl_validation_sensitivity.csv                                           (direct goSPL runs)
+  gospl_published_reference_sensitivity.csv                                  (published goSPL fields, reference surface)
 and writes
   figures/nature/ed_uncertainty.png, .pdf     a  erosion sensitivity of the silicate sink
                                               b  share of eroding land at or beyond the optimum
                                               c  adjusted-to-reference ratio of the silicate sink
+                                              (main model, adjusted and reference surfaces, against the 5-95%
+                                              bands of the ensemble and the climate states and the goSPL values)
   data/nature_recast/uncertainty_statements.md   every number the Methods paragraph on uncertainty quotes
 
     python3 finalise_uncertainty.py
@@ -22,6 +27,7 @@ from _load import series, FIG, OUT
 
 
 def read(name):
+    """A table of data/nature_recast/, or None if it does not exist yet."""
     p = OUT / name
     return pd.read_csv(p) if p.exists() else None
 
@@ -33,6 +39,7 @@ gos = read('gospl_validation_sensitivity.csv')
 pub = read('gospl_published_reference_sensitivity.csv')
 if pub is not None:
     pub = pub.sort_values('age')
+# keep only the ages that hold the full member count (a smoke test or an interrupted run leaves fewer)
 n_members = int(ens.n_members.max()) if ens is not None else 0
 if ens is not None:
     ens = ens[ens.n_members == n_members].set_index('age')
@@ -40,10 +47,12 @@ if cli is not None:
     cli = cli.set_index('age')
 
 fig, axs = plt.subplots(1, 3, figsize=(ns.DOUBLE, 2.55), gridspec_kw=dict(left=0.065, right=0.995, top=0.95, bottom=0.2, wspace=0.3))
+# (metric, factor for display, axis label, y limits) of panels a-c
 panels = (('S_sil', 1.0, 'Erosion sensitivity, silicate sink', (0.0, 0.45)),
           ('beyond_frac_eroding', 100.0, 'Land at or beyond optimum (%)', (0, 100)),
           ('ratio_F_sil', 1.0, 'Silicate sink, adjusted / reference', (0.9, 1.6)))
 for ax, (k, f, label, ylim), letter in zip(axs, panels, 'abc'):
+    # 5-95% bands: climate states (sky blue) and elevation ensemble (orange); ratio columns carry no surface suffix
     if cli is not None:
         lo, hi = (cli[f'{k}_p05'], cli[f'{k}_p95']) if k.startswith('ratio') else (cli[f'{k}_adj_p05'], cli[f'{k}_adj_p95'])
         ax.fill_between(cli.index, f * lo, f * hi, color=ns.C['sky'], alpha=0.35, lw=0)
@@ -60,6 +69,7 @@ for ax, (k, f, label, ylim), letter in zip(axs, panels, 'abc'):
             for case, col in (('central', ns.C['adj']), ('reference', ns.C['ref'])):
                 g = gos[(gos.metric == k) & (gos.case == case)]
                 ax.plot(g.age, f * g.goSPL, ls='none', marker='o', ms=3.2, mfc='white', mec=col, mew=0.9, zorder=6)
+    # panel c: raise the upper limit if the main model or the ensemble exceeds it
     if k.startswith('ratio'):
         top = max([float((main.F_sil_adj / main.F_sil_ref).max())] + ([float(ens[f'{k}_p95'].max())] if ens is not None else []))
         ylim = (0.9, max(ylim[1], 1.05 * top))
@@ -84,6 +94,7 @@ L = ['# Uncertainty experiments: numbers for the Methods paragraph', '',
 
 
 def h(tab, metric, stat, surface=None):
+    """The row of a headline table for one metric and statistic (and surface, for the climate table)."""
     q = (tab.metric == metric) & (tab.statistic == stat)
     if surface is not None:
         q &= tab.surface == surface
@@ -99,6 +110,7 @@ if ens is not None:
     x = h(ens_h, 'S_sil', 'time_max'); L.append(f'- highest S_sil at any age: p95 across members {x.p95:.3f}, largest member {x.max_member:.3f}')
     w = ens.S_sil_p95 - ens.S_sil_p05; wb = ens.beyond_frac_eroding_p95 - ens.beyond_frac_eroding_p05
     L.append(f'- p05-p95 width per age: S_sil median {w.median():.3f} (max {w.max():.3f} at {int(w.idxmax())} Ma); share beyond optimum median {wb.median():.3f} (max {wb.max():.3f} at {int(wb.idxmax())} Ma)')
+    # S_sil_reference is the unadjusted surface (member -2) evaluated in the ensemble; compared with the ensemble median
     L.append(f'- adjusted-minus-reference S_sil exceeds the ensemble width at {int(((ens.S_sil_reference - ens.S_sil_p50).abs() > w).sum())} of {na} ages')
     for m in ('members_with_S_sil_below_0.5_at_every_age', 'members_with_beyond_share_above_0.5_at_every_age_since_300Ma', 'members_with_beyond_share_higher_today_than_at_480Ma'):
         r = ens_h[ens_h.metric == m]
@@ -131,6 +143,7 @@ if gos is not None:
     L.append('')
 if pub is not None:
     L += [f'## Published goSPL fields, reference surface ({len(pub)} of 109 ages; goSPL minus NeuroLEM)', '']
+    # the five ages withheld from the training of NeuroLEM
     wh = pub.withheld_from_training == 1
     for k in ('S_sil', 'S_net', 'beyond_frac_eroding', 'D_Gt', 'F_sil'):
         dlt = pub[k] - pub[f'{k}_NeuroLEM']

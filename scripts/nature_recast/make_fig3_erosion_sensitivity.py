@@ -1,14 +1,35 @@
 #!/usr/bin/env python3
 """Fig. 3: Phanerozoic erosion rates relative to the drawdown optimum and the erosion sensitivity of the carbon fluxes.
-(a) erosion rates and the mean local optimum; (b) share of eroding land at or beyond the optimum; (c) erosion rate
-relative to the local optimum; (d) erosion sensitivity of the silicate sink, the net inorganic sink, the sulfide source
-and rock organic-carbon oxidation; (e) erosion flux and runoff; (f) kinetically limited share of the silicate sink."""
+
+Six time-series panels, 540 Ma to the present, all for the main model (kin_bridge_s2: runoff in the kinetic term,
+HadCM3L runoff ratio, erosion factor 2.0); 'adjusted' is the rock-chemistry-adjusted surface, 'PALEOMAP' the
+reference surface (dotted).
+  a  area-weighted erosion rate of eroding land: median (line), 25-75% and 5-95% ranges (shading), with the
+     area-weighted mean local optimum E_opt (dashed)
+  b  share of eroding land at or beyond its local optimum
+  c  erosion rate relative to the local optimum, E/E_opt: median and the same percentile ranges as in a
+  d  erosion sensitivity S = dlnF/dln(lambda) of the silicate sink, the net inorganic sink, the sulfide source and
+     rock organic-carbon oxidation; the right axis gives the buffering capacity 1 - S
+  e  erosion flux (Gt/yr) on both surfaces, with mean continental runoff (mm/yr) on the right axis
+  f  kinetically limited share of the silicate sink (flux-weighted mean of gamma)
+In b and d the darker band is the range of the three parameter sets and their mean; the pale band adds erosion
+factors 1 and 4 and the alternative runoff placement (whole flux). In f the band spans the parameter sets.
+
+Inputs:  data/nature_recast/<run>_{ens,Taiwan,Sichuan,NewZealand}.csv for the runs named in PAR and ALL
+         (written by run_weathering.py); runs that have not been made are skipped in the envelopes
+Outputs: figures/nature/fig3_erosion_sensitivity.png and .pdf
+
+    python3 make_fig3_erosion_sensitivity.py
+"""
 import numpy as np
 import _nature_style as ns
 import matplotlib.pyplot as plt
 from _load import series, FIG, SETS
 
 def env(col, cfgs):
+    """Minimum and maximum of column col across the runs cfgs and, for each, the three parameter sets and their mean.
+
+    Returns two arrays over age; a run or set whose table is missing is skipped."""
     arr = []
     for c in cfgs:
         for s in SETS + ['ens']:
@@ -18,10 +39,10 @@ def env(col, cfgs):
                 pass
     arr = np.array(arr); return arr.min(0), arr.max(0)
 
-a = series(); t = a.index.values
+a = series(); t = a.index.values                         # main model, mean of the three parameter sets; t = age (Ma)
 PAR = ['kin_bridge_s2']                                  # parameter sets
 ALL = ['kin_bridge_s2', 'kin_bridge_s1', 'kin_bridge_s4', 'out_bridge_s2']   # + erosion scale and runoff placement
-BOX = dict(fc='w', ec='none', pad=0.8, alpha=0.8)
+BOX = dict(fc='w', ec='none', pad=0.8, alpha=0.8)        # white backing for in-panel labels
 fig, axs = plt.subplots(3, 2, figsize=(ns.DOUBLE, 6.3), sharex=True,
                         gridspec_kw=dict(left=0.085, right=0.915, top=0.975, bottom=0.075, hspace=0.12, wspace=0.55))
 
@@ -42,7 +63,7 @@ ax.set_ylim(0, 100); ax.set_ylabel('Eroding land at or beyond\nthe local optimum
 ax.legend(loc='upper left', ncol=2, handlelength=1.2, columnspacing=0.6, borderaxespad=0.1, handletextpad=0.4)
 
 ax = axs[1, 0]                                           # c: erosion rate relative to the local optimum
-ax.axhline(1, color='k', lw=0.6)
+ax.axhline(1, color='k', lw=0.6)                         # E = E_opt: rising limb below, beyond the optimum above
 ax.fill_between(t, a.x_p05_adj, a.x_p95_adj, color=ns.C['adj'], alpha=0.12, lw=0)
 ax.fill_between(t, a.x_p25_adj, a.x_p75_adj, color=ns.C['adj'], alpha=0.30, lw=0)
 ax.plot(t, a.x_p50_adj, color=ns.C['adj'], lw=1.2, label='adjusted')
@@ -53,19 +74,22 @@ ax.text(535, 0.085, 'rising limb', fontsize=ns.SMALL, ha='left', va='center', bb
 ax.legend(loc='upper right', ncol=2, handlelength=1.2, columnspacing=0.6, borderaxespad=0.1, handletextpad=0.4)
 
 ax = axs[1, 1]                                           # d: erosion sensitivities
+# S = 1: supply-limited (flux proportional to erosion); S = 0: flux independent of erosion
 ax.axhline(0, color='k', lw=0.5); ax.axhline(1, color='k', lw=0.5, ls=(0, (4, 2)))
 lo, hi = env('S_sil_adj', ALL); ax.fill_between(t, lo, hi, color=ns.C['light'], alpha=0.35, lw=0)
 lo, hi = env('S_sil_adj', PAR); ax.fill_between(t, lo, hi, color=ns.C['sil'], alpha=0.25, lw=0)
 ax.plot(t, a.S_sil_adj, color=ns.C['sil'], lw=1.2, label='silicate sink, $S_{sil}$')
 import cellfields as cf
+# NET_BUDGET=full (environment) adds the organic pathways to the net sink; the paper uses the inorganic budget
 FULL = cf.BUDGET == 'full'
 ax.plot(t, cf.net_series(a, 'adj')[1], color=ns.C['net'], lw=1.2, label='net sink, $S_{net}$' if FULL else 'net inorganic sink, $S_{net}$')
 ax.plot(t, a.S_sulf_adj, color=ns.C['sulf'], lw=1.1, label='sulfide source')
-ax.plot(t, a.dF_ocp_adj / a.F_ocp_adj, color=ns.C['oc'], lw=1.1, label='rock OC oxidation')
-ax.plot(t, a.S_sil_ref, color=ns.C['sil'], lw=0.8, ls=':')
+ax.plot(t, a.dF_ocp_adj / a.F_ocp_adj, color=ns.C['oc'], lw=1.1, label='rock OC oxidation')   # dF/dlnE over F
+ax.plot(t, a.S_sil_ref, color=ns.C['sil'], lw=0.8, ls=':')                  # PALEOMAP surface, dotted
 ax.plot(t, cf.net_series(a, 'ref')[1], color=ns.C['net'], lw=0.8, ls=':')
-YL = (-1.15, 1.45) if FULL else (-0.45, 1.45)
+YL = (-1.15, 1.45) if FULL else (-0.45, 1.45)                               # the full budget reaches lower values
 ax.set_ylim(*YL); ax.set_ylabel('Erosion sensitivity, $S$')
+# right axis: buffering capacity 1 - S, the same lines read on an inverted scale
 ax2 = ax.twinx(); ax2.spines['right'].set_visible(True); ax2.set_ylim(1 - YL[0], 1 - YL[1]); ax2.set_ylabel('Buffering capacity, 1 − $S$')
 ax.legend(loc='upper left', ncol=2, handlelength=1.2, columnspacing=0.6, borderaxespad=0.1, handletextpad=0.4)
 
@@ -74,8 +98,8 @@ ax.plot(t, a.D_Gt_adj, color=ns.C['adj'], lw=1.2, label='adjusted')
 ax.plot(t, a.D_Gt_ref, color=ns.C['ref'], lw=0.9, ls=':', label='PALEOMAP')
 ax.set_ylabel('Erosion flux (Gt yr$^{-1}$)'); ax.set_ylim(0, 36)
 ax3 = ax.twinx(); ax3.spines['right'].set_visible(True)
-ax3.plot(t, a.q_mean_mm_adj, color=ns.C['sky'], lw=1.0)
-ax.plot([], [], color=ns.C['sky'], lw=1.0, label='runoff')
+ax3.plot(t, a.q_mean_mm_adj, color=ns.C['sky'], lw=1.0)             # mean land runoff, adjusted surface
+ax.plot([], [], color=ns.C['sky'], lw=1.0, label='runoff')           # proxy handle so runoff appears in the left-axis legend
 ax3.set_ylabel('Runoff (mm yr$^{-1}$)', color=ns.C['sky']); ax3.set_ylim(0, 900); ax3.tick_params(axis='y', colors=ns.C['sky'])
 ax.legend(loc='upper left', ncol=3, handlelength=1.2, columnspacing=0.6, borderaxespad=0.1, handletextpad=0.4)
 
@@ -86,6 +110,6 @@ ax.set_ylim(0, 100); ax.set_ylabel('Kinetically limited share\nof the silicate s
 
 for k, ax in enumerate(axs.flat):
     ns.panel_letter(ax, 'abcdef'[k], x=-0.2, y=0.93)
-for ax in axs[2]:
+for ax in axs[2]:                                        # shared age axis, oldest on the left, with the geological timescale
     ax.set_xlim(540, 0); ax.set_xlabel('Age (Ma)'); ns.timescale(ax, height=0.075)
 fig.savefig(FIG / 'fig3_erosion_sensitivity.png', dpi=400); fig.savefig(FIG / 'fig3_erosion_sensitivity.pdf')

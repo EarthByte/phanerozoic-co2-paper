@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
-"""Where the uncertainty experiments stand, and the next command to run.   python3 status.py"""
+"""Where the uncertainty experiments stand, and the next command to run.   python3 status.py
+
+Reads only file existence, modification times and row counts; computes and writes nothing. Prints three
+sections (inputs, runs, products), each line marked 'done' or 'TO DO', and then the list of
+run_uncertainty_m3.sh commands that would complete the work, in order. Called by
+`./run_uncertainty_m3.sh status`.
+"""
 import csv
 from pathlib import Path
 import _config as cfg
 
+# the two resumable GPU experiments
 ENS = cfg.ZENODO / 'geochem_uncertainty_ensemble' / 'nature_recast' / 'ensemble_sensitivity_members.csv'
 CLI = cfg.OUT / 'climate_sensitivity_nodes.csv'
 
 
 def blocks(path):
+    """{age: number of rows} of a csv with an `age` column; empty if the file does not exist."""
     n = {}
     if path.exists():
         with open(path, newline='') as fh:
@@ -18,6 +26,7 @@ def blocks(path):
 
 
 def line(ok, text):
+    """Print one status line."""
     print(('  done   ' if ok else '  TO DO  ') + text)
 
 
@@ -31,6 +40,7 @@ sp = cfg.OUT / 'surface_provenance.csv'
 if sp.exists():
     rows = list(csv.DictReader(open(sp, newline='')))
     arc = [r for r in rows if r['comparison'] == 'archive_vs_product']
+    # the archive matches the adopted surface when every land-mean agrees to within 5 cm
     off = max((abs(float(r['mean_archive']) - float(r['mean_reference'])) for r in arc), default=1e9)
     line(len(arc) == 109 and off <= 0.05, f'surface provenance: {len(arc)}/109 archived surfaces measured against the product; largest land-mean difference {off:.3f} m')
     if off > 0.05:
@@ -39,6 +49,7 @@ if sp.exists():
         nxt.append('./run_uncertainty_m3.sh provenance   # CPU, one table; only a partial check has been run')
 else:
     line(False, 'surface provenance: not measured'); nxt.append('./run_uncertainty_m3.sh provenance   # CPU, one table')
+# result tables older than the main-model table were computed on an earlier main run and are listed for re-running
 rft = cfg.OUT / 'runoff_form_tests.csv'
 line(rft.exists() and rft.stat().st_mtime > (cfg.OUT / 'kin_bridge_s2_ens.csv').stat().st_mtime if (cfg.OUT / 'kin_bridge_s2_ens.csv').exists() else False,
      'runoff-form tests newer than the main run')
@@ -52,6 +63,7 @@ for f, what, cmd in ((cfg.OUT / 'distribution_tests.csv', 'distribution-width te
     ok = f.exists() and main_t is not None and f.stat().st_mtime > main_t
     line(ok, what)
     if not ok: nxt.append(cmd)
+# 218 = 109 ages x 2 surfaces
 ac = cfg.OUT / 'archive_consistency.csv'
 if ac.exists():
     rows = list(csv.DictReader(open(ac, newline='')))
@@ -61,20 +73,24 @@ if ac.exists():
         nxt.append('./run_uncertainty_m3.sh archive-repair')
 else:
     line(False, 'archive consistency: not checked (a freshly rebuilt archive is NeuroLEM output by construction; the climate run checks it age by age)')
+# the main-model tables must be newer than every archived erosion field
 newest = max((f.stat().st_mtime for f in cfg.ERODEP_DIR.glob('erodep_*Ma.npz')), default=0)
 mt = cfg.OUT / 'kin_bridge_s2_ens.csv'
 line(mt.exists() and mt.stat().st_mtime > newest, 'main-model tables are newer than the erosion archive')
 if not (mt.exists() and mt.stat().st_mtime > newest):
     nxt.append('./run_uncertainty_m3.sh main         # tables, figures, audit; rebuilds the cache when the archive changed')
 print('Runs')
+# a complete ensemble age has 202 rows (reference surface, mean correction, 200 members)
 e = blocks(ENS); full = [a for a in ages if e.get(a) == 202]; other = sorted(a for a in e if e[a] != 202)
 line(len(full) == 109, f'palaeoelevation ensemble: {len(full)}/109 ages with 200 members' + (f'; ages with another member count (smoke test or interrupted): {other}' if other else ''))
 if len(full) < 109:
     nxt.append('caffeinate -i ./run_uncertainty_m3.sh ensemble 2>&1 | tee -a ~/uncertainty_ensemble.log')
+# a complete climate age has 54 rows (27 states x 2 surfaces)
 c = blocks(CLI); cfull = [a for a in ages if c.get(a) == 54]
 line(len(cfull) == 109, f'climate states: {len(cfull)}/109 ages with 27 states x 2 surfaces')
 if len(cfull) < 109:
     nxt.append('caffeinate -i ./run_uncertainty_m3.sh climate 2>&1 | tee -a ~/uncertainty_climate.log' if cfull else './run_uncertainty_m3.sh climate-pilot')
+# dynamic-topography test: 51 ages 0-250 Ma, three rows per age (one per surface evaluated); six control terms
 dt = blocks(cfg.OUT / 'dyntopo_gld428_robust.csv'); dfull = [a for a in range(0, 255, 5) if dt.get(a) == 3]
 line(len(dfull) == 51, f'dynamic topography (gld428, retained plates, 0-250 Ma): {len(dfull)}/51 ages')
 if len(dfull) < 51:
@@ -93,6 +109,7 @@ ngp = len(blocks(gp))
 line(ngp == 109, f'published goSPL fields, reference surface: {ngp}/109 ages')
 if ngp < 109:
     nxt.append('./run_uncertainty_m3.sh gospl-published   # CPU only')
+# gaps = -1 when the summary does not exist yet
 rs = cfg.OUT / 'reactivity_summary.csv'
 gaps = -1
 if rs.exists():

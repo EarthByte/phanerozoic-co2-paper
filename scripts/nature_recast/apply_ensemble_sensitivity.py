@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Erosion sensitivity of the carbon sink for every member of the palaeoelevation ensemble.
 
+The 200-member elevation ensemble of the paper (Methods, "Uncertainty and sensitivity", item 5; Extended
+Data Fig. 6; Supplementary Information, "Uncertainty ensembles"); run age by age by
+run_ensemble_sensitivity_m3.sh and summarised by collate_ensemble_sensitivity.py.
+
 Consuming half of the geochemical palaeoelevation-uncertainty experiment under the weathering
 formulation of the Nature-format manuscript. It reads one temporary 1-degree member cube written by
 ``../build_geochem_elevation_ensemble.py``, transfers every member correction to the 0.1-degree
 physiography, runs NeuroLEM once per member (the routines of ``../apply_geochem_ensemble.py``), and
-evaluates the same quantities as ``run_weathering.py`` for the main model: fluxes of the three
-inorganic and two organic pathways, erosion sensitivities, the share of eroding land at or beyond
+evaluates the same quantities as ``run_weathering.py`` for the main model: silicate, sulfide and
+net inorganic fluxes and the two organic pathways, erosion sensitivities, the share of eroding land at or beyond
 its local optimum, kinetically limited share, weathering intensity and riverine d7Li.
 
 Consistency with the main model
@@ -20,14 +24,28 @@ Rows written per age: member -2 is the unadjusted reference surface (zero correc
 mean correction of the ensemble, members 0..N-1 the ensemble. Each member is integrated over its own
 emergent land and, with suffix ``_common``, over the emergent land of the reference surface.
 
-Verification: the cube carries the production central correction (``delta_central``, the grid of
---central-dir). Before the members are evaluated, NeuroLEM run on that correction must reproduce the
-archived adjusted erosion field of the age (``surrogate_erodep/erodep_<age>Ma.npz``) and the
+Verification: the cube carries the production central correction (``delta_central``, the grid
+passed to the generator with --central-dir). Before the members are evaluated, NeuroLEM run on that
+correction must reproduce the archived adjusted erosion field of the age (``surrogate_erodep/erodep_<age>Ma.npz``) and the
 evaluation must reproduce the main-run table; otherwise the age is rejected, because the ensemble
 would then not be bracketing the main model.
 
 Storage: ONE csv for the whole experiment. The rows of an age are appended in a single write after
 the age has finished; rows of an interrupted age are never written. Nothing else is kept.
+
+Columns (HEADER): age, member, random_seed, isostatic_model (density structure of the member, or 'reference' /
+'ensemble_mean'), Qero_surface_km3yr and land_area_old_Mkm2 (erosion volume flux and land area as computed by
+../apply_geochem_ensemble.py), then the metrics of run_weathering.summarise on own land (fluxes Gt C/yr,
+sensitivities and shares dimensionless), the _common metrics on the land of the reference surface, and the
+silicate sensitivity and sink of each parameter set.
+
+Inputs: the member cube (--members-nc), the goSPL physiography and precipitation of the age
+(<data>/gospl_salles/salles_<age>Ma.npz), HadCM3L temperature (valdes_temperature), the HadCM3L runoff table,
+the NeuroLEM checkpoint, the main run and the archived erosion field (for the check).
+
+    python apply_ensemble_sensitivity.py --members-nc <cube.nc> --out-csv <members.csv> [--main-run PREFIX]
+                                         [--workers N] [--no-verify] [--force]
+    python apply_ensemble_sensitivity.py --list-done N --out-csv <members.csv>    # ages complete for N members
 """
 from __future__ import annotations
 
@@ -45,6 +63,7 @@ import weathering_core as wc
 import run_weathering as rw
 from build_cache import runoff_ratio_field, R_EARTH
 
+# columns of run_weathering.summarise kept per member on its own land and (suffix _common) on the reference land
 KEEP = ['land_Mkm2', 'eroding_Mkm2', 'E_mean_eroding_mm', 'q_mean_mm', 'D_Gt',
         'F_sil', 'F_sulf', 'F_net', 'F_ocp', 'F_ocb', 'S_sil', 'S_sulf', 'S_net',
         'S_net_oc_rel_sil', 'S_total_rel_sil', 'Gamma_sil', 'WI', 'd7Li_riv',
@@ -60,11 +79,11 @@ def load_calibration(main_prefix):
     lines = Path(f'{main_prefix}_amplitudes.txt').read_text().strip().splitlines()
     amps, amp_oc = ast.literal_eval(lines[0]), ast.literal_eval(lines[1])
     settings = dict(re.findall(r"(\w+)=(\{[^}]*\}|\S+)", lines[2]))     # values may be dict reprs with spaces (driver={...})
-    # the experiments evaluate every surface with the weathering form of the main model; the forms the main run can take
-    # beyond the published one (sulfide exponent, reference-runoff scaling, precipitation-driven sets, log-stretch) are not carried by
-    # the shared evaluator yet, so a main run in one of those forms must not be silently paired with it
-    # the sulfide runoff exponent is carried: every surface is evaluated with the exponent of the paired main run (the live main run uses
-    # the pure West form; the preserved run of the direct goSPL surfaces, data/nature_recast/gospl_surfaces/, the published -0.75)
+    # every surface is evaluated with the weathering form of the paired main run. The sulfide runoff exponent is carried over
+    # by setting weathering_core.BETA for the rest of the process (the main run uses the West form, 0; a file without the
+    # field means the published -0.75). The other forms a run can take (reference-runoff scaling, precipitation-driven sets,
+    # log-stretch) are not implemented in the evaluators, so a main run in one of those forms is refused rather than
+    # silently paired with them
     wc.BETA['sulfide'] = float(settings.get('beta_sulf', '-0.75'))
     if (settings.get('qref_scale', 'none') != 'none' or "'precip'" in settings.get('driver', '')
             or float(settings.get('stretch', 1)) != 1.0):
@@ -77,6 +96,8 @@ def load_calibration(main_prefix):
 
 
 def area_corrected(lat, nlon):
+    """Spherical cell areas (m2) of the 0.1-degree grid, len(lat) x nlon, the duplicate dateline columns halved
+    (as in build_cache.py)."""
     dg = np.deg2rad(0.1)
     a = (R_EARTH ** 2 * dg * dg * np.cos(np.deg2rad(lat)))[:, None] * np.ones((1, nlon))
     a[:, 0] *= 0.5; a[:, -1] *= 0.5
@@ -84,7 +105,12 @@ def area_corrected(lat, nlon):
 
 
 class Evaluator:
-    """Weathering of one age on the cells that are land in ANY surface considered."""
+    """Weathering of one age on the cells that are land in ANY surface considered.
+
+    cells  flat indices of those cells; q runoff (mm/yr), T temperature (K) and A cell area (m2) on the full flattened
+    grid, fixed for the age (climate is the same for every member); cal = (amps, amp_oc, qgrid, eopt_q) of the main
+    run; mode, oc_form and scale (erosion calibration factor) as in the main run.
+    """
 
     def __init__(self, cells, q, T, A, cal, mode, oc_form, scale):
         self.cells, self.q, self.T, self.A = cells, q[cells], T[cells], A[cells]
@@ -93,6 +119,8 @@ class Evaluator:
         self.fitsets = {r: wc.load_fits(rw.PARAMS, [r]) for r in rw.SETS}
 
     def __call__(self, erodep, mask, ref_mask):
+        """Metrics of one member: erodep (mm/yr, negative = erosion), its land mask and the reference land mask,
+        all on the full flattened grid. Returns a dict with the metric columns of HEADER."""
         c = self.cells
         m = mask[c]; mref = ref_mask[c]
         E = np.where(m | mref, np.maximum(-erodep[c].astype(float), 0.0), 0.0) * self.scale
@@ -117,6 +145,7 @@ class Evaluator:
 
 
 def ages_done(path, n_rows):
+    """{age: row count} for the ages of the member table that hold exactly n_rows rows (complete ages)."""
     if not path.exists():
         return {}
     import pandas as pd
@@ -189,15 +218,20 @@ def main():
     if settings['qsrc'] != 'bridge':
         raise SystemExit('the main run must use the HadCM3L runoff ratio (--qsrc bridge)')
 
+    # reference physiography (m) and precipitation forcing (m/yr) on the 0.1-degree grid: the inputs of NeuroLEM
     with np.load(Path(a.salles_dir) / f'salles_{age}Ma.npz', allow_pickle=True) as sd:
         z_base = sd['inputs'][0].astype(np.float32); rain = sd['inputs'][1].astype(np.float32)
         lat = sd['lat'].astype(float); lon = sd['lon'].astype(float)
     shape = z_base.shape
     with np.load(cfg.TEMP_DIR / f'{age}Ma.npz') as t:
         T = (t['temp_q'].astype(np.float32) * float(t['scale']) + float(t['offset'])).astype(float) + 273.15
+    # runoff (mm/yr) = precipitation x HadCM3L runoff ratio, as in the main model
     ratio, puma = runoff_ratio_field(age, lat, lon)
     q = rain.astype(float) * 1000.0 * ratio
+    # A_new: areas of the weathering evaluation; A_old: areas of apply_geochem_ensemble.py, used only for the
+    # Qero_surface_km3yr and land_area_old_Mkm2 columns
     A_new = area_corrected(lat, lon.size); A_old = _area_m2(lat, shape)
+    # land of the reference (unadjusted) surface
     ref_mask = z_base > 0
 
     verify = not a.no_verify
@@ -239,6 +273,7 @@ def main():
                     raise SystemExit(f'[{age} Ma] central member {k} = {rc[k]:.8g}, main run has {want:.8g}: the ensemble is not evaluated as the main model')
         print(f'[{age} Ma] central correction reproduces the archived erosion field (RMSE {rmse:.2e} mm/yr) and the main run', flush=True)
 
+    # member -2: zero correction (reference surface); member -1: mean correction of the ensemble; then every member
     specials = [(-2, 'reference', np.zeros_like(deltas[0])), (-1, 'ensemble_mean', deltas.mean(axis=0))]
     todo = specials + [(j, model_names[model_idx[j]], deltas[j]) for j in range(n)]
     # inference runs on the accelerator in this thread; the weathering of finished members runs
@@ -265,6 +300,7 @@ def main():
             collect(False)
         collect(True)
     append_age(out_csv, rows)
+    # rows keep the order of submission, so rows[0] is the reference surface and rows[2:] the members
     S = np.array([r['S_sil'] for r in rows[2:]]); B = np.array([r['beyond_frac_eroding'] for r in rows[2:]])
     print(f'[{age} Ma] S_sil reference {rows[0]["S_sil"]:.3f}, ensemble p05/p50/p95 {np.quantile(S, .05):.3f}/{np.quantile(S, .5):.3f}/{np.quantile(S, .95):.3f}; '
           f'beyond {np.quantile(B, .05):.3f}/{np.quantile(B, .5):.3f}/{np.quantile(B, .95):.3f}', flush=True)

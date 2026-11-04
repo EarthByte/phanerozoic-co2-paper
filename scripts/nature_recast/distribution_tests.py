@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """How much the results depend on the width of the simulated erosion-rate distribution.
 
+Methods, "Test against cosmogenic erosion rates", and Supplementary Information, "Erosion rates against
+cosmogenic basin averages".
+
 The OCTOPUS comparison (octopus_comparison.py) shows the simulated distribution of erosion rates across the
 basins with cosmogenic-nuclide rates to be narrower than the measured one: a standard deviation of log10 rate of 0.47 against
 0.79 (ratio 0.59; 0.57–0.61 for basins of one cell and larger). This script widens the distribution of
@@ -9,9 +12,12 @@ of the age (the calibrated quantity) fixed, for k = 1.3, 1.5 and 1.8 (1/0.59 = 1
 evaluation of the main model on each (run_weathering.py --log-stretch k; calibration repeated on the
 stretched present-day field as in the main model) and sets the results beside the main model in ONE table,
 data/nature_recast/distribution_tests.csv: Phanerozoic-mean, minimum and maximum S_sil, mean S_net, mean
-share of eroding land beyond the optimum and its values at 480 and 0 Ma, mean silicate sink.
+share of eroding land beyond the optimum and its values at 480 and 0 Ma, mean kinetically limited share, mean
+silicate sink (Gt C/yr) and mean erosion flux (Gt/yr); adjusted surface, three-set mean. Each stretched run
+writes data/nature_recast/dst_k<k>_* (log in log_dst_k<k>.txt) and is re-used unless --force is given; the
+main model's row (k = 1) is read from its table.
 
-    python3 distribution_tests.py [--k 1.3 1.5 1.8] [--force]
+    python3 distribution_tests.py [--main kin_bridge_s2] [--k 1.3 1.5 1.8] [--force]
 """
 import argparse, csv, subprocess, sys
 from pathlib import Path
@@ -20,6 +26,7 @@ import _config as cfg
 
 
 def table(prefix):
+    """Columns of <prefix>_ens.csv used here (adjusted surface, three-set mean), as arrays over age."""
     rows = list(csv.DictReader(open(f'{prefix}_ens.csv')))
     return {k: np.array([float(r[k]) for r in rows]) for k in ('age', 'S_sil_adj', 'S_net_adj', 'beyond_frac_eroding_adj', 'Gamma_sil_adj', 'F_sil_adj', 'D_Gt_adj')}
 
@@ -33,6 +40,7 @@ def main():
     here = Path(__file__).resolve().parent
     main_t = table(cfg.OUT / a.main)
     out_rows = []
+    # k = 1 is the main model as simulated
     for k in [1.0] + list(a.k):
         if k == 1.0:
             t = main_t; label = 'as simulated (main model)'

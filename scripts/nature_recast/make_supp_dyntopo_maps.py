@@ -4,17 +4,28 @@
 The term is the one the test adds to the rock-chemistry-adjusted surface (Paleotopo_data_assimilation,
 outputs_scotese_reach500_land/dt_term_all_crust/dt_term_all_lagr_0-250Ma.nc, variable term_robust, which holds the term on
 all continental crust): the change in gld428 dynamic topography since the present day, carried point by point onto every
-continental cell (dyntopo_term_lagrangian.py), low-passed with a 600-km Gaussian filter, with the mean level of each
-continental block removed. Land without a term would be drawn grey (none is expected; the count is printed and the grey
-legend entry appears only if there is any). The line is the shoreline of the adjusted surface on the same 1-degree grid
+continental cell (dyntopo_term_lagrangian.py), low-passed with a Gaussian filter of 600 km full width at half maximum,
+with the mean level of each continental block removed. Land without a term would be drawn grey (none is expected; the
+count is printed and the grey legend entry appears only if there is any); a cell counts as carrying the term where it
+is finite and the file's `robust` flag is set. The line is the shoreline of the adjusted surface on the same 1-degree grid
 (dem_scotese_adjusted/<age>Ma_corrected_SW.nc, M_corrected > 0). Purple lines are the plate boundaries of the reconstruction
-that drove the mantle-flow model, subduction zones with teeth on the overriding plate, placed on the map by the rotation
-that best aligns the nearby continents of the two reconstructions (Paleotopo scripts_Scotese/flowmodel_boundaries_paleomap.py,
+that drove the mantle-flow model (Merdith et al. 2021), subduction zones with teeth on the overriding plate, placed on the
+map by the rotation that best aligns the nearby continents of the two reconstructions (Paleotopo scripts_Scotese/flowmodel_boundaries_paleomap.py,
 outputs_scotese_reach500_land/dt_term_all_crust/flowmodel_boundaries_paleomap_0-250Ma.npz; the PALEOMAP topologies end at
 about 100 Ma and are not the boundaries that made the field).
 
+Inputs
+    the term file (variables age, lat, lon, term_robust in m, robust), read from PALEO_ROOT (default:
+    Paleotopo_data_assimilation beside NeuroLEM); the boundary file, with for each age `other_<age>` and `sub_<age>`
+    ((N, 2) lat/lon in degrees, polylines separated by NaN rows) and `sub_side_<age>` (side of the overriding plate of
+    each subduction polyline: +1 left of its direction, -1 right, 0 drawn without teeth); the adjusted surfaces on the 1-degree grid
+    of the term in <data archive>/dem_scotese_adjusted/.
+Output
+    figures/nature/supp_dyntopo_term_maps.{png,pdf}: six Winkel-Tripel maps in two rows of three, panels a-f, colour
+    scale clipped at +-500 m (triangles on the colour bar mark values beyond).
+
     python3 make_supp_dyntopo_maps.py                  # 250, 200, 150, 100, 50, 25 Ma -> figures/nature/supp_dyntopo_term_maps.{png,pdf}
-    python3 make_supp_dyntopo_maps.py 40 80 120 160 200 240
+    python3 make_supp_dyntopo_maps.py 40 80 120 160 200 240     # any six ages held by the term and boundary files
 """
 import os, sys
 from pathlib import Path
@@ -62,25 +73,33 @@ def pieces(arr):
 
 def draw_boundaries(ax, bnd, age, mm_per_unit):
     """Plate boundaries of age `age`: other boundaries thin, subduction zones thicker with filled teeth on the side of the
-    overriding plate (side +1 left of the segment direction, -1 right)."""
+    overriding plate (side +1 left of the segment direction, -1 right).
+
+    bnd: the boundary file (see the module docstring); mm_per_unit: millimetres on the page per projected map unit, so
+    that the teeth have the same printed size on every map."""
     for seg in pieces(bnd[f'other_{age}']):
         x, y = _project_line(seg[:, 1], seg[:, 0]); ax.plot(x, y, color=BND_COLOR, lw=0.35, zorder=5, solid_capstyle='round')
-    h, b, sp = (v / mm_per_unit for v in TOOTH_MM)
+    h, b, sp = (v / mm_per_unit for v in TOOTH_MM)          # tooth height, half base and spacing in map units
     tri = []
     sides = bnd[f'sub_side_{age}']; k = 0
+    # start index of each subduction polyline: the first row and the row after every NaN separator; the last separator
+    # is taken to close the array, so it starts no polyline
     raw = bnd[f'sub_{age}']; starts = [0] + [i + 1 for i in np.flatnonzero(~np.isfinite(raw[:, 0]))][:-1]
     for j, st in enumerate(starts):
-        en = st + int(np.argmax(~np.isfinite(raw[st:, 0])))
-        side = int(sides[j]) if j < len(sides) else 0
+        en = st + int(np.argmax(~np.isfinite(raw[st:, 0])))          # the NaN row that ends polyline j
+        side = int(sides[j]) if j < len(sides) else 0                 # 0 (or no entry): drawn without teeth
         for seg in pieces(raw[st:en + 1]):
             x, y = _project_line(seg[:, 1], seg[:, 0]); x = np.asarray(x); y = np.asarray(y)
             ax.plot(x, y, color=BND_COLOR, lw=0.7, zorder=5, solid_capstyle='round')
             if side == 0 or len(x) < 2:
                 continue
+            # arc length along the projected line; one tooth every sp, starting half a spacing in
             ds = np.hypot(np.diff(x), np.diff(y)); s = np.r_[0, np.cumsum(ds)]
             for s0 in np.arange(sp / 2, s[-1], sp):
                 i = min(int(np.searchsorted(s, s0)) - 1, len(ds) - 1); i = max(i, 0)
                 if ds[i] == 0: continue
+                # point at arc length s0 on segment i, unit tangent (dx, dy) and unit normal (nx, ny) towards the
+                # overriding plate; the tooth is a triangle with its base on the line and its apex along the normal
                 f = (s0 - s[i]) / ds[i]; px, py = x[i] + f * (x[i + 1] - x[i]), y[i] + f * (y[i + 1] - y[i])
                 dx, dy = (x[i + 1] - x[i]) / ds[i], (y[i + 1] - y[i]) / ds[i]; nx, ny = -dy * side, dx * side
                 tri.append([(px - dx * b, py - dy * b), (px + dx * b, py + dy * b), (px + nx * h, py + ny * h)])
@@ -89,6 +108,7 @@ def draw_boundaries(ax, bnd, age, mm_per_unit):
 
 
 def read(path, keys):
+    """Variables `keys` of a netCDF file as numpy arrays (netCDF4, or h5py where netCDF4 is absent)."""
     try:
         from netCDF4 import Dataset
         with Dataset(str(path)) as d:
@@ -102,7 +122,7 @@ def read(path, keys):
 
 t = read(TERM, ('age', 'lat', 'lon', 'term_robust', 'robust'))
 ages = np.rint(t['age']).astype(int).tolist()
-X, Y = projected_mesh(t['lon'], t['lat'])
+X, Y = projected_mesh(t['lon'], t['lat'])          # Winkel-Tripel coordinates of the 1-degree cell centres
 bnd = np.load(BND)
 if not set(AGES) <= set(bnd['ages'].tolist()):
     raise SystemExit(f'plate boundaries missing for some of {AGES} in {BND}')
@@ -118,16 +138,18 @@ for n, age in enumerate(AGES):
     if not (np.allclose(d['lat'], t['lat']) and np.allclose(d['lon'], t['lon'])):
         raise SystemExit(f'grid of {age} Ma surface differs from the term grid')
     term = t['term_robust'][i].astype(float)
-    rob = t['robust'][i].astype(bool) & np.isfinite(term)
-    land = d['M_corrected'] > 0
-    grey = (land | np.isfinite(term)) & ~rob
+    rob = t['robust'][i].astype(bool) & np.isfinite(term)        # cells drawn with the term
+    land = d['M_corrected'] > 0                                  # land of the adjusted surface
+    grey = (land | np.isfinite(term)) & ~rob                     # land or crust without a drawn term
     n_grey += int((grey & land).sum())
-    r, c = divmod(n, 3)
+    r, c = divmod(n, 3)                                          # two rows of three maps
     ax = fig.add_axes([0.012 + c * 0.330, 0.594 - r * 0.414, W, H])
     ax.pcolormesh(X, Y, np.ma.masked_where(~grey, np.ones(grey.shape)), cmap=NOTERM, shading='nearest', rasterized=True)
     pm = ax.pcolormesh(X, Y, np.ma.masked_where(~rob, term), cmap=ROMA_R, norm=Normalize(-LIM, LIM),
                        shading='nearest', rasterized=True)
     draw_mask_contour(ax, X, Y, land, color='#202020', lw=0.45)
+    # mm on the page per projected unit: axes width (fraction x figure width in inches / inches per mm) over the
+    # projected width of the globe, which spans the axes
     draw_boundaries(ax, bnd, age, mm_per_unit=W * ns.DOUBLE / ns.MM / (np.nanmax(X) - np.nanmin(X)))
     decorate_global_map(ax)
     ax.text(0.0, 1.0, 'abcdef'[n], transform=ax.transAxes, fontsize=ns.PANEL, fontweight='bold', ha='left', va='bottom')

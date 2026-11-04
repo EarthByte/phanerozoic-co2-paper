@@ -4,7 +4,7 @@ Tracked crust as in orogen_tracks_before_after.md. a = ln(flux ratio)/ln(erosion
 
 | Belt | before → belt (Ma) | erosion flux (Mt/yr) | a_sil realised / fixed | a_sulf realised / fixed | a_ocp realised / fixed | Δnet: exposure + climate = total | Δnet with OC: exposure + climate |
 |---|---|---|---|---|---|---|---|
-| Caledonian belt, 420 Ma | 465 → 420 | 32 → 1765 | 0.61 / 0.67 | 0.94 / 0.99 | 0.92 / 0.92 | +1.395 -0.072 = +1.323 | -1.069 -0.072 |
-| Central Pangaean belt, 300 Ma | 355 → 300 | 451 → 2802 | 0.22 / 0.14 | 0.84 / 0.82 | 0.90 / 0.90 | -0.123 +0.042 = -0.081 | -0.616 +0.042 |
+| Caledonian belt, 420 Ma | 465 → 420 | 33 → 1765 | 0.61 / 0.67 | 0.94 / 0.99 | 0.92 / 0.92 | +1.393 -0.074 = +1.319 | -1.069 -0.074 |
+| Central Pangaean belt, 300 Ma | 355 → 300 | 274 → 2802 | 0.38 / 0.17 | 0.92 / 0.84 | 0.90 / 0.90 | -0.119 +0.128 = +0.009 | -0.648 +0.128 |
 | Himalaya and Tibet, present | 55 → 0 | 253 → 2925 | 0.31 / 0.10 | 0.92 / 0.82 | 0.86 / 0.86 | -0.173 +0.200 = +0.027 | -0.654 +0.200 |
 | Central Andes, present | 40 → 0 | 459 → 1104 | 0.27 / -0.06 | 0.95 / 0.82 | 0.83 / 0.83 | -0.278 +0.137 = -0.141 | -0.750 +0.137 |

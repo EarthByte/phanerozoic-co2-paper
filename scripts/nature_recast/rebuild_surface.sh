@@ -1,27 +1,48 @@
 #!/usr/bin/env bash
 # Move the whole analysis onto the adopted adjusted surface: rebuild the archived erosion fields with
 # NeuroLEM on the product grids, replace the archive's palaeoelevation products, preserve what the direct
-# goSPL comparison must keep, and clear the tables that the re-run must not resume from.
+# goSPL comparison must keep, and set aside the tables that the re-run must not resume from.
+#
+# Role in the paper: the adjusted palaeoelevation surface used throughout (Methods, "Palaeoelevation") is
+# the product grid set corrected_scotese_reach500_land of the palaeotopography assimilation. This script
+# makes the data archive carry that surface: the NeuroLEM erosion fields (surrogate_erodep/), the shipped
+# 1-degree grids (dem_scotese_adjusted/) and the ensemble summaries. Every table and figure is then
+# recomputed from the archive by run_uncertainty_m3.sh. It is the "rebuild-surface" step of that script.
 #
 #   ./rebuild_surface.sh                 the product named in PRODUCT (corrected_scotese_reach500_land)
 #   ./rebuild_surface.sh --dry-run       print what would move and run; change nothing
 #
+# Environment (all optional):
+#   NEUROLEM_CO2_DATA   data archive (default: neurolem_CO2_zenodo_data beside the repository)
+#   PALEO_ROOT          Paleotopo_data_assimilation checkout holding data/<PRODUCT> and the ensemble summaries
+#   PRODUCT             product grid set to adopt (default: corrected_scotese_reach500_land)
+#   PREVIOUS_SURFACE    name of the surface being replaced, used to label the _to_delete/ folders
+#   NEUROLEM_PY         Python with torch and netCDF4, for apply_dem.py
+#   ANALYSIS_PY         Python for check_surface_provenance.py (default: python3)
+#
 # What it does, in order (nothing is deleted; superseded files go to _to_delete/ folders named after
-# the surface they belong to and the date):
+# the surface they belong to and a time stamp):
+#   0. checks that 109 product grids and 109 ensemble summaries exist and that NEUROLEM_PY has torch and
+#      netCDF4, and stops without changes if check_surface_provenance.py already passes at 220 Ma
 #   1. preserves the NeuroLEM main run and ensemble table of the surface the direct goSPL runs used, in
 #      data/nature_recast/gospl_surfaces/, so gospl_validation_sensitivity.py keeps pairing goSPL with the
 #      surrogate on identical inputs (the goSPL runs are not repeated)
 #   2. runs apply_dem.py on the product grids into a fresh directory (109 ages; the reference arm
-#      ero_scotese is reused from the present archive and checked identical; GPU, about 15 min on the M3),
-#      then swaps it in as surrogate_erodep/
+#      ero_scotese is reused from the present archive and checked identical; GPU, about 15 min),
+#      compares the old and new archives age by age (surface_change_<previous>_to_<product>.csv),
+#      then swaps the new one in as surrogate_erodep/
 #   3. replaces dem_scotese_adjusted/ with copies of the product grids and
 #      geochem_uncertainty_ensemble/elevation_summary/ with the ensemble summaries built on them;
 #      the NeuroLEM member tables of the earlier ensemble go to _to_delete/
 #   4. moves every derived table of the earlier surface out of data/nature_recast/ (main-run tables,
-#      ensemble, climate, goSPL, reactivity, audit); the runoff-ratio and degassing inputs stay
+#      ensemble, climate, goSPL, reactivity, audit) and sets aside the input cache; the runoff-ratio and
+#      degassing inputs stay
 #   5. runs check_surface_provenance.py, which must pass before anything else is computed
 # Then: ./run_uncertainty_m3.sh main, runoff-tests, ensemble, climate, gospl-published, gospl,
 # reactivity, finalise (or ./run_uncertainty_m3.sh resume-surface for the whole sequence).
+#
+# Exit codes: 3 NEUROLEM_PY unusable, 4 missing product grids, summaries or archive, 5 incomplete rebuild
+# (the present archive is then left untouched).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; cd "$HERE"
 ROOT="$(cd "$HERE/../.." && pwd)"                                     # CO2_paper
@@ -37,21 +58,25 @@ OUT="$ROOT/data/nature_recast"
 STAMP="$(date +%Y%m%d_%H%M%S)"
 PREVIOUS="${PREVIOUS_SURFACE:-nocraton}"                              # name of the surface being replaced, for the _to_delete folders
 DRY=0; [[ "${1:-}" == "--dry-run" ]] && DRY=1
+# run CMD...: execute, or in --dry-run only print the command
 run() { if [[ $DRY -eq 1 ]]; then echo "  would: $*"; else "$@"; fi; }
 
 echo "Rebuild on $PRODUCT"
 echo "  product grids:      $PRODUCT_DIR"
 echo "  ensemble summaries: $ENSEMBLE_SUMMARIES"
 echo "  data archive:       $ZEN"
+# 0. preconditions: complete product and summary sets, a working NeuroLEM Python, an existing archive
 n_prod=$(ls "$PRODUCT_DIR"/*Ma_corrected_SW.nc 2>/dev/null | wc -l | tr -d ' ')
 n_sum=$(ls "$ENSEMBLE_SUMMARIES"/*Ma_geochem_ensemble_summary.nc 2>/dev/null | wc -l | tr -d ' ')
 [[ "$n_prod" -eq 109 ]] || { echo "expected 109 product grids in $PRODUCT_DIR, found $n_prod" >&2; exit 4; }
 [[ "$n_sum" -eq 109 ]] || { echo "expected 109 ensemble summaries in $ENSEMBLE_SUMMARIES, found $n_sum" >&2; exit 4; }
 if [[ $DRY -eq 0 ]]; then
-    [[ -x "$PY" ]] || { echo "NEUROLEM_PY is not executable: $PY" >&2; exit 3; }
+    [[ -x "$PY" ]] || PY="$(command -v python3 || true)"
+    [[ -n "$PY" && -x "$PY" ]] || { echo "no usable Python: set NEUROLEM_PY" >&2; exit 3; }
     "$PY" -c 'import torch, numpy, netCDF4' || { echo "NEUROLEM_PY lacks torch or netCDF4" >&2; exit 3; }
 fi
 [[ -d "$ZEN/surrogate_erodep" && -e "$ZEN/surrogate_erodep/erodep_220Ma.npz" ]] || { echo "no present archive at $ZEN/surrogate_erodep" >&2; exit 4; }
+# a quick provenance check at one age: if the archive already carries the product, there is nothing to do
 if "$APY" check_surface_provenance.py --ages 220 --out "${TMPDIR:-/tmp}/surface_provenance_220.csv" > /dev/null 2>&1; then
     echo "the archive already carries $PRODUCT (check_surface_provenance.py passes at 220 Ma); nothing to rebuild"; exit 0
 fi
@@ -80,7 +105,8 @@ else
     echo "==> $PAIRED already holds the paired run; kept"
 fi
 
-# 2. NeuroLEM on the product grids
+# 2. NeuroLEM on the product grids ("delta" mode: the 1-degree increment added to the goSPL physiography),
+#    written to a fresh time-stamped directory so an interrupted run cannot touch the present archive
 NEW="$ZEN/surrogate_erodep.rebuild_$STAMP"
 echo "==> NeuroLEM on $PRODUCT, 109 ages -> $NEW (reference arm reused from the present archive)"
 run "$PY" "$ROOT/scripts/apply_dem.py" --zhou-dir "$PRODUCT_DIR" --salles-dir "$ZEN/gospl_salles" \
@@ -88,6 +114,9 @@ run "$PY" "$ROOT/scripts/apply_dem.py" --zhou-dir "$PRODUCT_DIR" --salles-dir "$
 if [[ $DRY -eq 0 ]]; then
     n_new=$(ls "$NEW"/erodep_*Ma.npz | wc -l | tr -d ' ')
     [[ "$n_new" -eq 109 ]] || { echo "rebuild wrote $n_new of 109 ages; the present archive is untouched at $ZEN/surrogate_erodep" >&2; exit 5; }
+    # Per age, in the embedded Python below: the reference arm and inputs must be bit-identical; the table
+    # records the land-mean and largest adjustment of both surfaces, their land-cell counts and the RMS
+    # change of the adjusted erosion field (mm/yr) over the land of either surface.
     echo "  comparing the two archives age by age -> $OUT/surface_change_${PREVIOUS}_to_${PRODUCT}.csv"
     "$PY" - "$ZEN/surrogate_erodep" "$NEW" "$OUT/surface_change_${PREVIOUS}_to_${PRODUCT}.csv" "$PREVIOUS" "$PRODUCT" <<'PYCHECK'
 import sys, csv, numpy as np
@@ -109,6 +138,7 @@ print('  reference arm identical at all 109 ages')
 print(f'  adjustment over emergent land, mean over ages: {prev} {p.mean():+.1f} m, {prod} {q.mean():+.1f} m; per age {q.min():+.1f} to {q.max():+.1f} m')
 PYCHECK
 fi
+# swap: the present archive goes to _to_delete/, the rebuilt one takes its name
 run mkdir -p "$ZEN/_to_delete"
 run mv -n "$ZEN/surrogate_erodep" "$ZEN/_to_delete/surrogate_erodep_${PREVIOUS}_$STAMP"
 run mv -n "$NEW" "$ZEN/surrogate_erodep"
@@ -126,7 +156,8 @@ GE="$ZEN/geochem_uncertainty_ensemble"
 run mkdir -p "$GE/elevation_summary"
 if [[ $DRY -eq 0 ]]; then cp -p "$ENSEMBLE_SUMMARIES"/*Ma_geochem_ensemble_summary.nc "$ENSEMBLE_SUMMARIES"/geochem_elevation_ensemble_summary.csv "$GE/elevation_summary/"; else echo "  would: cp ensemble summaries -> $GE/elevation_summary/"; fi
 
-# 4. derived tables of the earlier surface
+# 4. derived tables of the earlier surface (moved, never deleted; the glob list is matched with nullglob so a
+#    pattern without matches is skipped)
 TD="$OUT/_to_delete/${PREVIOUS}_$STAMP"
 echo "==> moving the derived tables of the earlier surface to $TD"
 run mkdir -p "$TD"

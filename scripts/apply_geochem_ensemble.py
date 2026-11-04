@@ -1,26 +1,75 @@
 #!/usr/bin/env python3
-"""Apply NeuroLEM and the paper's CO2 calculation to every DEM member.
+"""Apply NeuroLEM and a weathering CO2 calculation to every palaeoelevation ensemble member.
 
-This is the consuming half of the geochemical paleoelevation-uncertainty
-experiment.  It reads one temporary, compressed 1-degree member cube written
-by ``build_geochem_elevation_ensemble.py``.  Every member correction is
-bilinearly transferred to the matching high-resolution Salles/goSPL
-physiography and is passed independently through NeuroLEM.  The program then
-computes continental erosion, sediment-delivery proxies and Bufe weathering
-CO2 fluxes for that member.
+This is the consuming half of the geochemical palaeoelevation-uncertainty
+experiment (Methods, "Uncertainty and sensitivity", item 5: a 200-member
+ensemble of the elevation adjustment).  It reads one temporary, compressed
+1-degree member cube written by ``build_geochem_elevation_ensemble.py``.  Every
+member correction is bilinearly transferred to the 0.1-degree goSPL
+physiography of the same age (the published goSPL input grids, Salles et al.,
+2023), added to it exactly as ``apply_dem.py`` adds the central correction, and
+passed independently through NeuroLEM.  For every member the program then
+computes continental gross erosion and the silicate, sulfide and net inorganic
+weathering CO2 fluxes of the West (2012) law as fitted by Bufe et al. (2024),
+using the calculation of ``bufe_co2_from_dem.py`` (median regional fit, one
+amplitude factor per phase, runoff = precipitation x a uniform runoff
+coefficient).
+
+The routines that load the model, transfer a member to 0.1 degree and run the
+inference (``_load_model``, ``_prepare_constant_tensors``, ``_infer_member``,
+``_area_m2``, ``_qero_km3yr``) are also imported by
+``nature_recast/apply_ensemble_sensitivity.py``, which evaluates the same
+members with the weathering formulation and calibration of the main model and
+writes the ensemble results reported in the paper.
+
+Inputs
+------
+--members-nc    <age>Ma_geochem_ensemble_members.nc: delta_member (member, lat,
+                lon) in m on the 1-degree grid, isostatic_model_index (member),
+                random seed and target age as attributes.
+--salles-dir    salles_<age>Ma.npz: goSPL elevation (m) and precipitation (m/yr)
+                on the 0.1-degree grid, 1801 x 3601 nodes.
+--ckpt          NeuroLEM checkpoint (best.pt).
+--temp-dir      <age>Ma.npz temperature fields of the HadCM3L simulations
+                (Valdes et al., 2021), read with bufe_co2_from_dem._load_temp_K.
+--params-json   regional weathering-law parameters of Bufe et al. (2024).
+
+Outputs (under --out)
+---------------------
+member_tables/<age>Ma_members.csv
+    one row per member: isostatic model; Qero_surface_km3yr (gross erosion over
+    the member's own emergent land, km3/yr); Qero_common_reference_cells_km3yr
+    (over the emergent land of the unadjusted reference surface);
+    land_area_Mkm2 and reference_land_area_Mkm2 (million km2);
+    net_co2_surface_GtCyr, scf_surface_GtCyr, sf_surface_GtCyr (net inorganic
+    CO2 drawdown, silicate-cation and sulfide-sulfate terms, Gt C/yr, own land);
+    net_co2_common_reference_cells_GtCyr (net drawdown on reference land).
+age_summaries/<age>Ma_summary.csv
+    p05, p50, mean, p95 and standard deviation of every metric across members.
+spatial_quantiles/<age>Ma_spatial_quantiles.nc   (--spatial only)
+    cellwise p05/p50/p95 of the erosion-deposition rate and of the net CO2
+    flux (float32, compressed), the fraction of members in which each cell is
+    land, and the reference land mask.
 
 Storage policy
 --------------
 The full high-resolution member fields are never written.  A small CSV row is
-kept for every member.  Optionally (``--spatial``), the program retains the
-member fields in RAM for this age only, writes compressed float32 p05/p50/p95
-maps, and
+kept for every member.  With ``--spatial`` the program retains the member
+fields of this age in RAM, writes compressed float32 p05/p50/p95 maps and
 releases the arrays before exit.  The calling controller deletes the 1-degree
 handoff cube after this program succeeds.
 
-The intended controller invokes this program once per age.  This gives clean
-resume semantics and caps disk usage at one small handoff cube plus final
-tables/maps.
+The controller invokes this program once per age, which gives clean resume
+semantics (an age whose member table and summary exist is skipped unless
+``--force``) and caps disk usage at one small handoff cube plus the final
+tables and maps.
+
+Usage
+-----
+    python apply_geochem_ensemble.py --members-nc 220Ma_geochem_ensemble_members.nc \
+        --salles-dir <data archive>/gospl_salles --ckpt <data archive>/surrogate_model/best.pt \
+        --temp-dir <data archive>/valdes_temperature --params-json data/bufe_2024_params.json \
+        --out <output directory> [--spatial]
 """
 from __future__ import annotations
 
@@ -38,19 +87,30 @@ from bufe_co2_from_dem import (
 )
 
 
-R_EARTH_M = 6.371e6
-GRID_DEG = 0.1
-M_CAT = 30.0
-M_SO4 = 96.06
+R_EARTH_M = 6.371e6     # m
+GRID_DEG = 0.1          # spacing of the NeuroLEM grid, degrees
+M_CAT = 30.0            # g/mol, mean molar mass of silicate cations (Methods, net inorganic flux)
+M_SO4 = 96.06           # g/mol, sulfate
 
 
 def _area_m2(lat, shape):
+    """Spherical cell areas (m^2) of the regular 0.1-degree grid, broadcast to ``shape``.
+
+    Area = R^2 * (0.1 deg in rad)^2 * cos(lat), one value per latitude row.
+    """
     dg = np.deg2rad(GRID_DEG)
     row = (R_EARTH_M * R_EARTH_M * dg * dg) * np.cos(np.deg2rad(lat))
     return np.broadcast_to(row[:, None], shape)
 
 
 def _load_model(ckpt_path, device):
+    """Load the NeuroLEM checkpoint onto ``device`` in evaluation mode.
+
+    Returns (model, checkpoint dict, norm), where ``norm`` holds the input
+    standardisation (in_mean, in_std per channel: elevation, precipitation),
+    the target transform (asinh_s, t_mean, t_std) and ``mult`` = 2**depth, the
+    factor the padded grid must be divisible by.
+    """
     import torch
     from salles_unet import GlobalUNet
 
@@ -81,6 +141,11 @@ def _pad_torch(x, mult):
 
 
 def _prepare_constant_tensors(z_base, rain, norm, device):
+    """Move the member-invariant inputs to ``device`` once per age.
+
+    Returns the reference elevation (m, unnormalised, because every member adds
+    its own correction to it) and the standardised precipitation channel.
+    """
     import torch
     z = torch.from_numpy(np.asarray(z_base, np.float32)).to(device)
     r = torch.from_numpy(np.asarray(rain, np.float32)).to(device)
@@ -90,7 +155,15 @@ def _prepare_constant_tensors(z_base, rain, norm, device):
 
 def _infer_member(model, delta_1deg, z_base_t, rain_n_t, target_shape,
                   norm, device):
-    """Upsample one correction on-device and run one NeuroLEM inference."""
+    """Upsample one correction on-device and run one NeuroLEM inference.
+
+    ``delta_1deg`` is the member correction (m) on the 1-degree grid (181, 361);
+    ``target_shape`` is the 0.1-degree shape (1801, 3601). The member elevation
+    is the reference goSPL elevation plus the upsampled correction, as in the
+    default "delta" mode of apply_dem.py. Returns the erosion-deposition rate
+    (float32, mm/yr, negative = erosion) and the member's emergent-land mask
+    (elevation > 0), both of ``target_shape``.
+    """
     import torch
     import torch.nn.functional as F
 
@@ -105,6 +178,7 @@ def _infer_member(model, delta_1deg, z_base_t, rain_n_t, target_shape,
               float(norm["in_std"][0]))
     x = torch.stack((elev_n, rain_n_t), dim=0)[None]
     xp, (h, w) = _pad_torch(x, norm["mult"])
+    # invert the standardised asinh target transform of training (as in apply_dem.infer)
     with torch.inference_mode():
         pred = model(xp)[0, 0, :h, :w]
         erodep = norm["asinh_s"] * torch.sinh(
@@ -115,19 +189,21 @@ def _infer_member(model, delta_1deg, z_base_t, rain_n_t, target_shape,
 
 
 def _qero_km3yr(erodep, mask, area):
-    # The surrogate's erodep field is in mm/yr (equivalently m/Myr), not
-    # m/yr: its mean land erosion at 460 Ma is 0.0176, which as mm/yr is
-    # 17.6 m/Myr against the paper's calibrated present-day 71 m/Myr, and
-    # its distribution matches the archived goSPL erorate (mm/yr) closely.
-    # Dividing an m2-weighted sum by 1e9 therefore yielded 1000x the
-    # km3/yr it claimed. Confirmed against a direct goSPL run: 1.6 km3/yr
-    # gross erosion at 460 Ma reference, against 1639.1 from this routine.
+    """Gross erosion (km^3/yr) integrated over the cells of ``mask``.
+
+    Deposition is not netted off: only max(-erodep, 0) is summed. The
+    surrogate's erodep field is in mm/yr (equivalently m/Myr), the unit of the
+    goSPL erosion-rate fields it was trained on, so an area-weighted sum
+    (mm/yr x m^2 = 1e-3 m^3/yr) is divided by 1e12 to give km^3/yr. A direct
+    goSPL run of the 460 Ma reference surface gives 1.6 km^3/yr of gross
+    erosion, matching this integral.
+    """
     return float(np.sum(np.where(mask, np.maximum(-erodep, 0.0), 0.0) * area)
                  / 1.0e12)
 
 
 def _qnet_km3yr(erodep, mask, area):
-    """Signed net continental export: erosion minus internal deposition.
+    """Signed net continental export (km^3/yr): erosion minus internal deposition.
 
     erodep is mm/yr; see _qero_km3yr for why the divisor is 1e12.
     """
@@ -141,10 +217,25 @@ def _weathering_two_masks(erodep_scaled, surface_mask, reference_mask,
     This is algebraically equivalent to two calls to bufe_co2_from_dem._one_case
     but avoids repeating the expensive high-resolution exponential/power
     calculations for every ensemble member.
+
+    Arguments: ``erodep_scaled`` is the erosion-deposition rate (mm/yr) after the
+    erosion calibration factor; ``surface_mask`` the member's own emergent land;
+    ``reference_mask`` the emergent land of the unadjusted reference surface;
+    ``q_mm`` runoff (mm/yr); ``T_K`` temperature (K); ``area`` cell areas (m^2);
+    ``fits`` the regional parameter fits per phase; ``f_sil``, ``f_sulf`` the
+    silicate and sulfide amplitude factors. Depositing cells have zero erosion
+    and therefore no weathering flux (Methods, "Depositional land").
+
+    Returns (net CO2 drawdown, silicate-cation term, sulfide term) integrated
+    over ``surface_mask`` and the net drawdown over ``reference_mask``, all in
+    Gt C/yr, plus the cell field of the net flux (mol C m^-2 yr^-1, zero outside
+    ``surface_mask``).
     """
     union = surface_mask | reference_mask
     erosion = np.where(union, np.maximum(-erodep_scaled.astype(np.float64), 0.0), 0.0)
     runoff = np.where(union, q_mm, 0.0)
+    # cells outside both masks get the reference temperature so the Arrhenius
+    # term stays finite; their flux is zeroed below
     temp = np.where(union, T_K, T_REF_K)
     scf = f_sil * np.where(
         union,
@@ -156,13 +247,15 @@ def _weathering_two_masks(erodep_scaled, surface_mask, reference_mask,
         weathering_flux(erosion, runoff, temp, fits["sulfide"], BETA["sulfide"]),
         0.0,
     )
-    fnet = 0.5 * (scf / M_CAT) - 0.5 * (sf / M_SO4)
+    # Net inorganic drawdown F_net = 1/2 SCF/M_cat - 1/2 SF/M_SO4 (Methods), in
+    # mol C per m^2 and year when the fluxes are in g m^-2 yr^-1.
+    fnet = 0.5 * (scf / M_CAT) - (sf / M_SO4)
 
-    carbon = 12.011e-15
+    carbon = 12.011e-15     # g/mol C x 1e-15 Gt/g: mol C -> Gt C
     def integrate(mask):
         net = float(np.sum(np.where(mask, fnet, 0.0) * area)) * carbon
         sil = float(np.sum(np.where(mask, scf, 0.0) * area)) / M_CAT * 0.5 * carbon
-        sulf = float(np.sum(np.where(mask, sf, 0.0) * area)) / M_SO4 * 0.5 * carbon
+        sulf = float(np.sum(np.where(mask, sf, 0.0) * area)) / M_SO4 * carbon
         return net, sil, sulf
 
     net_surface, scf_surface, sf_surface = integrate(surface_mask)
@@ -173,7 +266,12 @@ def _weathering_two_masks(erodep_scaled, surface_mask, reference_mask,
 
 def _land_mean_elevation_from_delta(z_base, delta_1deg, lat1, lon1,
                                     lat_t, lon_t):
-    """Cheap reporting metric; use NumPy interpolation only for elevation mean."""
+    """Mean elevation (m) over the emergent land of one member, without a NeuroLEM run.
+
+    ``delta_1deg`` on (lat1, lon1) is interpolated row by row onto the target
+    grid and added to ``z_base``; cells above 0 m count as land. Not called by
+    main(); kept as a cheap reporting helper.
+    """
     from scipy.interpolate import RegularGridInterpolator
     itp = RegularGridInterpolator((lat1, lon1), delta_1deg,
                                   bounds_error=False, fill_value=None)
@@ -192,10 +290,11 @@ def _land_mean_elevation_from_delta(z_base, delta_1deg, lat1, lon1,
 def _write_compressed_f4(ds, name, values, dims, long_name, units):
     """Write lossless-with-respect-to-float32 compressed spatial output.
 
-    The first production ensemble independently packed each quantile into
-    int16 using a different data-dependent scale.  Rounding could then reverse
-    p05/p50/p95 order.  Quantiles are already float32, so preserving that dtype
-    with NetCDF compression is both simpler and order safe.
+    The quantiles are stored as float32 with DEFLATE compression rather than
+    packed integers: packing each quantile into int16 with its own
+    data-dependent scale could reverse the p05/p50/p95 order through
+    rounding, whereas keeping the float32 values is order safe.
+    Non-finite values are rejected.
     """
     a = np.asarray(values, dtype=np.float32)
     if not np.isfinite(a).all():
@@ -214,12 +313,22 @@ def _write_spatial_quantiles(path, age, lat, lon, erodep_stack, fco2_stack,
                              random_seed, land_fraction=None,
                              reference_land_mask=None,
                              history_source="neurolem/apply_geochem_ensemble.py"):
+    """Write cellwise p05/p50/p95 maps of one age to a CF netCDF file.
+
+    ``erodep_stack`` and ``fco2_stack`` have shape (member, lat, lon) and are
+    zero outside each member's emergent land. ``land_fraction`` (optional) is
+    the fraction of members in which each cell is land; ``reference_land_mask``
+    (optional) the land mask of the unadjusted reference surface. The file is
+    written to a hidden temporary name, read back and checked (monotonic
+    quantiles, float32, valid land fraction and mask), and only then moved onto
+    ``path``, so an interrupted run never leaves a partial map in place.
+    """
     import netCDF4 as nc
 
     qs = (0.05, 0.50, 0.95)
     n_members = int(erodep_stack.shape[0])
     # np.quantile may use an in-place partition/copy; do one stack at a time
-    # so peak memory stays comfortably below the M3's 64 GB.
+    # so peak memory stays comfortably below 64 GB.
     er_q = np.quantile(erodep_stack, qs, axis=0).astype(np.float32)
     del erodep_stack
     fc_q = np.quantile(fco2_stack, qs, axis=0).astype(np.float32)
@@ -258,9 +367,10 @@ def _write_spatial_quantiles(path, age, lat, lon, erodep_stack, fco2_stack,
         vlon.axis = "X"
         labels = ("p05", "p50", "p95")
         for i, label in enumerate(labels):
+            # the erosion-deposition rate of the stack is in mm/yr (see _qero_km3yr)
             vero = _write_compressed_f4(
                 ds, f"erodep_{label}", er_q[i], ("lat", "lon"),
-                f"{label} NeuroLEM erosion/deposition rate", "m yr-1")
+                f"{label} NeuroLEM erosion/deposition rate", "mm yr-1")
             vero.sign_convention = (
                 "positive is deposition; negative is erosion; zero outside "
                 "each member's emergent-land mask before calculating cellwise quantiles")
@@ -337,6 +447,7 @@ def _write_spatial_quantiles(path, age, lat, lon, erodep_stack, fco2_stack,
 
 
 def _write_age_summary(member_csv: Path, summary_csv: Path):
+    """Summarise one age's member table: p05, p50, mean, p95 and sd (ddof=1) of every metric."""
     import pandas as pd
 
     d = pd.read_csv(member_csv)
@@ -357,6 +468,7 @@ def _write_age_summary(member_csv: Path, summary_csv: Path):
 
 
 def main():
+    """Process one member cube (one age): NeuroLEM and weathering for every member, then tables and maps."""
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--members-nc", required=True,
@@ -370,7 +482,7 @@ def main():
     p.add_argument("--runoff-coefficient", type=float, default=0.4)
     p.add_argument("--erate-scale", type=float, default=2.0)
     p.add_argument("--f-sil", type=float, default=2.4)
-    p.add_argument("--f-sulf", type=float, default=0.2)
+    p.add_argument("--f-sulf", type=float, default=0.1)
     p.add_argument("--spatial", action="store_true",
                    help="retain this age in RAM and write compressed float32 p05/p50/p95 maps")
     p.add_argument("--force", action="store_true")
@@ -410,18 +522,19 @@ def main():
         raise FileNotFoundError(temp_path)
 
     sd = np.load(salles_path, allow_pickle=True)
-    z_base = sd["inputs"][0].astype(np.float32)
-    rain = sd["inputs"][1].astype(np.float32)
+    z_base = sd["inputs"][0].astype(np.float32)        # reference goSPL elevation, m
+    rain = sd["inputs"][1].astype(np.float32)          # precipitation, m/yr
     lat = sd["lat"].astype(np.float64)
     lon = sd["lon"].astype(np.float64)
     target_shape = z_base.shape
     area = _area_m2(lat, target_shape)
-    ref_mask = z_base > 0
-    ref_area_mkm2 = float(area[ref_mask].sum() / 1e12)
+    ref_mask = z_base > 0                              # emergent land of the reference surface
+    ref_area_mkm2 = float(area[ref_mask].sum() / 1e12)  # m^2 -> million km^2
 
     raw = json.load(open(args.params_json))
     fits = {rxn: median_fit(raw, rxn, args.regions) for rxn in REACTIONS_USED}
     T_K = _load_temp_K(Path(args.temp_dir), age)
+    # runoff (mm/yr) = precipitation (m/yr -> mm/yr) x a uniform runoff coefficient
     q_mm = rain.astype(np.float64) * 1000.0 * args.runoff_coefficient
 
     dev = _device()
@@ -452,6 +565,7 @@ def main():
         q_common = _qero_km3yr(erodep, ref_mask, area)
         land_area = float(area[mask].sum() / 1e12)
 
+        # erosion calibration factor: surrogate rate -> total denudation rate (Methods)
         er_scaled = erodep.astype(np.float64) * args.erate_scale
         net, scf, sf, net_common, fnet = _weathering_two_masks(
             er_scaled, mask, ref_mask, q_mm, T_K, area, fits,
@@ -488,8 +602,8 @@ def main():
                                  reference_land_mask=ref_mask)
         print(f"wrote {map_path} ({map_path.stat().st_size / 1e6:.1f} MB)")
 
-    # Help the unified-memory M3 release model/intermediate storage promptly
-    # before the controller starts the next age.
+    # Release the model and device tensors promptly (relevant on Apple
+    # unified memory) before the controller starts the next age.
     del model, z_base_t, rain_n_t, delta_members
     if dev == "mps" and hasattr(torch, "mps"):
         torch.mps.empty_cache()

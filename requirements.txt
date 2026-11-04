@@ -6,4 +6,4 @@ netCDF4>=1.6
 pyproj>=3.5
 imageio-ffmpeg>=0.4
 torch>=2.0            # NeuroLEM inference (ensemble, climate-state and dynamic-topography tests)
-# optional: geopandas, shapely>=2 (OCTOPUS comparison); rasterio (process-domain comparison); pygplates (plate-model tracking)
+# optional: geopandas, shapely>=2 (OCTOPUS comparison); rasterio (process-domain comparison); pygplates (plate-model tracking); openpyxl (CO2 envelope from the proxy spreadsheet)

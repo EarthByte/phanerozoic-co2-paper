@@ -1,12 +1,32 @@
 #!/usr/bin/env python3
-"""Extended Data Fig. 3: goSPL-NeuroLEM comparison (direct goSPL runs on Gadi against NeuroLEM).
+"""Extended Data Fig. 3: direct goSPL simulations against NeuroLEM on identical inputs.
 
-Panels a, b read neurolem_comparison.csv from the Gadi bundle when it is mounted (SSD); otherwise the copy kept in the repo,
-data/nature_recast/ed3_neurolem_comparison.csv. That copy was recovered on 2026-10-28, while the SSD was away, from the
-marker positions in the vector PDF of the published figure, and checked against direct_gospl_skill.csv
-(Continental_drainage/validation): after one constant axis offset of 0.006 km3/yr, the goSPL/NeuroLEM differences agree
-with the tabulated ones within 0.02 percentage points. Replace it with the bundle file when the SSD is back.
-Panels c, d read validation_maps_1deg.nc (bundle, or Continental_drainage/validation). No titles: panel letters only."""
+The 20 direct goSPL runs (PALEOMAP reference, adjusted surface and two ensemble members at
+60, 220, 240, 460 and 520 Ma) were post-processed by analyse_gadi_validation.py.
+
+  a  goSPL against NeuroLEM gross erosion of every run, km3/yr, with the 1:1 line
+  b  adjusted-to-reference ratios of gross erosion, goSPL against NeuroLEM
+  c  240 Ma map of the change in signed erosion-deposition rate, adjusted - PALEOMAP, mm/yr
+  d  240 Ma map of the change in net inorganic CO2 flux, adjusted - PALEOMAP, mmol C m-2 yr-1
+Colour marks the age and marker shape the case; in c and d the solid grey contour is the
+PALEOMAP coastline and the dashed red contour that of the adjusted surface (1-degree cells at
+least half land).
+
+Inputs
+  panels a, b  neurolem_comparison.csv in --derived (the output directory of
+               analyse_gadi_validation.py); if that is absent, the repository copy
+               data/nature_recast/ed3_neurolem_comparison.csv. The repository copy was
+               reconstructed from the marker positions in the vector PDF of the figure and
+               checked against direct_gospl_skill.csv (Continental_drainage/validation):
+               after one constant axis offset of 0.006 km3/yr, the goSPL/NeuroLEM differences
+               agree with the tabulated ones within 0.02 percentage points.
+  panels c, d  validation_maps_1deg.nc in --derived, or in ../Continental_drainage/validation.
+
+Output: --out (default figures/figS3_gadi_validation.png) and a PDF beside it.
+The figure carries panel letters only; the description belongs in the caption.
+
+    python3 make_figS3_gadi_validation.py [--derived DIR] [--out PATH]
+"""
 from __future__ import annotations
 
 import argparse
@@ -28,12 +48,12 @@ from _wintri_map import decorate_global_map, draw_mask_contour, projected_mesh
 
 AGES = (60, 220, 240, 460, 520)
 CASES = ("reference", "central", "qnet_p05", "qnet_p95")
-# Validated as a set on all pairs against a white surface: normal-vision worst
-# pair dE 16.3 (floor 15), lightness band and chroma floor pass. CVD worst pair
-# dE 6.9 is inside the 6-8 band, legal because age is also named in the legend
-# and tabulated in the supplement; aqua and yellow sit below 3:1 contrast, for
-# which that same table is the documented relief. Do not substitute by eye --
-# the previous #427AA1/#665191 pair failed the normal-vision floor at dE 11.6.
+# One colour per age, validated as a set on all pairs against a white background:
+# the closest pair for normal vision is dE 16.3 (floor 15), and lightness and chroma
+# lie within bounds. The closest pair under colour-vision deficiency is dE 6.9, which
+# is acceptable because the age is also named in the legend and tabulated in the
+# Supplementary Information; the same table covers aqua and yellow, which sit below
+# 3:1 contrast. Any substitute palette should be re-validated, not chosen by eye.
 AGE_COLOURS = {60: "#1baf7a", 220: "#e34948", 240: "#eda100",
                460: "#2a78d6", 520: "#4a3aa7"}
 CASE_LABELS = {"reference": "PALEOMAP", "central": "adjusted", "qnet_p05": "member p05", "qnet_p95": "member p95"}
@@ -41,11 +61,13 @@ CASE_MARKERS = {"reference": "o", "central": "s", "qnet_p05": "v", "qnet_p95": "
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
+    """Read a CSV file into a list of row dicts."""
     with path.open(newline="") as stream:
         return list(csv.DictReader(stream))
 
 
 def identity(ax, values: list[float]) -> None:
+    """Draw the 1:1 line and set equal, square limits padded 7% beyond the data."""
     low, high = min(values), max(values)
     span = high - low
     low -= 0.07 * span
@@ -58,6 +80,12 @@ def identity(ax, values: list[float]) -> None:
 
 
 def add_map(ax, x, y, data, mask_ref, mask_new, title, label, cmap, limit) -> None:
+    """Draw one Winkel Tripel difference map with a symmetric colour scale.
+
+    x, y are projected cell centres; data is centred on zero and scaled to
+    +-limit; mask_ref and mask_new are drawn as solid and dashed coastlines.
+    ``title`` is not used (panels carry letters only).
+    """
     image = ax.pcolormesh(
         x, y, data, shading="nearest", cmap=cmap,
         norm=TwoSlopeNorm(vmin=-limit, vcenter=0.0, vmax=limit),
@@ -72,6 +100,7 @@ def add_map(ax, x, y, data, mask_ref, mask_new, title, label, cmap, limit) -> No
 
 
 def main() -> int:
+    """Build the four panels and write PNG and PDF."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--derived", type=Path,
@@ -144,6 +173,7 @@ def main() -> int:
     ax_a.add_artist(age_legend)
     ax_a.legend(handles=case_handles, frameon=False, fontsize=8, loc="lower right")
 
+    # maps at 240 Ma, adjusted ("central") minus reference
     with nc.Dataset(nc_path) as ds:
         ages = list(map(int, ds.variables["age"][:]))
         cases = [str(value) for value in ds.variables["case"][:]]
@@ -151,12 +181,16 @@ def main() -> int:
         lat = np.asarray(ds.variables["lat"][:], dtype=float)
         lon = np.asarray(ds.variables["lon"][:], dtype=float)
         erodep = np.asarray(ds.variables["erosion_deposition_rate"][ai], dtype=float)
+        # mol C m-2 yr-1 -> mmol C m-2 yr-1
         fco2 = np.asarray(ds.variables["net_inorganic_CO2_flux"][ai], dtype=float) * 1000.0
         land = np.asarray(ds.variables["initial_land_fraction"][ai], dtype=float)
     x, y = projected_mesh(lon, lat)
+    # show cells with any appreciable land on either surface
     union = (land[ri] > 0.05) | (land[ci] > 0.05)
     de = np.where(union, erodep[ci] - erodep[ri], np.nan)
     df = np.where(union, fco2[ci] - fco2[ri], np.nan)
+    # symmetric colour limits at the 98.5th percentile of |difference|, with a floor,
+    # so a few extreme cells do not wash out the pattern
     de_lim = max(0.02, float(np.nanpercentile(np.abs(de), 98.5)))
     df_lim = max(0.2, float(np.nanpercentile(np.abs(df), 98.5)))
     add_map(
@@ -169,8 +203,8 @@ def main() -> int:
         None,
         "net CO₂ flux, adjusted − PALEOMAP (mmol C m⁻² yr⁻¹)", "RdBu", df_lim,
     )
-    # No figure title: it is the caption's job, and it was the last suptitle in
-    # the figure set. The reclaimed strip goes back to the panels.
+    # No figure title: the caption carries the description, and the top margin
+    # goes to the panels.
     fig.subplots_adjust(left=0.085, right=0.985, bottom=0.075, top=0.985, wspace=0.17, hspace=0.18)
     for ax, letter in zip((ax_a, ax_b, ax_c, ax_d), "abcd"):
         ax.text(-0.3 if letter in "ab" else 0.0, 1.0, letter, transform=ax.transAxes, fontsize=10, fontweight="bold", va="top", ha="left")

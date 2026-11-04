@@ -10,6 +10,18 @@ Defaults follow the layout of the CO2-paper repository and its companion data ar
   NATURE_OUT          small result tables (git-tracked)
   NATURE_FIG          figures
   NATURE_PROX         weathering-proxy data
+
+Fixed paths derived from these:
+
+  PARAMS       <repo>/data/bufe_2024_params.json, weathering-law parameters of Bufe et al. (2024)
+  ERODEP_DIR   <data>/surrogate_erodep, archived NeuroLEM erosion fields, erodep_<age>Ma.npz
+  TEMP_DIR     <data>/valdes_temperature, HadCM3L surface-air temperature on the 0.1-degree grid, <age>Ma.npz
+  SENS         <data>/climate_uncertainty/phanda_sensitivity.npz, the fitted pattern-scaling emulator
+  EXPERIMENTS  PhanDA experiment list (suite, plate age, PUMA run identifier), shipped with the repository
+  DEGASSING    gross solid-Earth degassing table written by extract_degassing.py
+  PCO2         proxy CO2 curves (age, ppm) of Foster et al. (2017) and Judd et al. (2024)
+
+Importing this module creates the output and figure folders if they do not exist.
 """
 import os, sys
 from pathlib import Path

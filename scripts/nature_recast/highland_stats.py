@@ -1,11 +1,31 @@
 #!/usr/bin/env python3
-"""Mountain terrain (above 1,500 m) through time: position relative to the local optimum and carbon fluxes."""
+"""Mountain terrain (above 1,500 m) through time: position relative to the local optimum and carbon fluxes.
+
+Main model (adjusted surface, erosion scale 2, three-set mean; cellfields.compute) at the 109 ages; feeds
+Extended Data Fig. 8 and the number audit. Land is split into eroding land above 1,500 m ('high') and
+eroding land below it ('low'), on the palaeoelevation of the adjusted surface. 'net' is the net budget of
+cellfields.py (the inorganic budget unless NET_BUDGET=full); 'neti' is always the inorganic budget.
+
+Output: data/nature_recast/highland_stats.csv, one row per age:
+  high_Mkm2                  eroding area above 1,500 m, 10^6 km2
+  high_share_eroding         its share of eroding land
+  high_beyond, low_beyond    area share at or beyond the local optimum (dneti <= 0), above and below 1,500 m
+  high_source                area share above 1,500 m where the net budget is a CO2 source
+  high_x_median              median E/E_opt of cells above 1,500 m (unweighted)
+  high_E, high_q, low_q      area-weighted erosion rate and runoff, mm/yr
+  high_net_density, low_net_density   net drawdown per unit area, g C m-2 yr-1 (= t C km-2 yr-1)
+  high_share_net, high_share_sil, high_share_neti, high_share_denudation   share of the global flux from above 1,500 m
+  high_S_net, low_S_net, high_S_sil, low_S_sil   erosion sensitivities of the fluxes of each band
+
+    python3 highland_stats.py
+"""
 import csv, numpy as np
 import cellfields as cf
 from _load import OUT
 rows = []
 for age in range(0, 545, 5):
     f, d = cf.compute(age, full=False)
+    # eroding land of the adjusted surface, split at 1,500 m palaeoelevation
     A = f['area']; m = f['mask'] & (f['E'] > 0); hi = m & (f['z'] > 1500); lo = m & ~hi
     Ah = A[hi].sum()
     r = dict(age=age, high_Mkm2=Ah / 1e12, high_share_eroding=Ah / A[m].sum(),

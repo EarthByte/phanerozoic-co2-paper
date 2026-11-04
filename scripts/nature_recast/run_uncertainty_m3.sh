@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# One entry point for everything that still has to be computed for the Nature-format manuscript.
+# One entry point for the computations of the paper: the main model, its sensitivity tests and the
+# uncertainty experiments behind the Extended Data figures and the Supplementary Information (Methods,
+# "Uncertainty and sensitivity"). Run from scripts/nature_recast:  ./run_uncertainty_m3.sh <step> [arguments for the step]
 #
 #   ./run_uncertainty_m3.sh status           what is complete, what to run next
 #   ./run_uncertainty_m3.sh ensemble         palaeoelevation ensemble, 200 members x 109 ages (resumable)
 #   ./run_uncertainty_m3.sh climate-pilot    27 climate states at 240 Ma, with both consistency checks
 #   ./run_uncertainty_m3.sh climate          27 climate states x 109 ages (resumable), then the Monte Carlo bands
-#   ./run_uncertainty_m3.sh gospl            direct goSPL runs on their own mesh (needs the SSD with the Gadi bundle)
+#   ./run_uncertainty_m3.sh gospl            direct goSPL runs on their own mesh (needs the volume holding the goSPL run bundle)
 #   ./run_uncertainty_m3.sh cache            input cache for Figs 1 and 4 and the reactivity runs
 #   ./run_uncertainty_m3.sh finalise         figure and statements from whatever is complete
 #   ./run_uncertainty_m3.sh after-ensemble   climate, gospl, cache, finalise in sequence
@@ -31,29 +33,39 @@
 #   ./run_uncertainty_m3.sh aess             weathering feedback with the emulator scaled to the PhanDA apparent Earth-system sensitivity (CPU, about 6 min; resumable)
 #   ./run_uncertainty_m3.sh gospl-published  published goSPL fields of the reference surface, all ages (CPU)
 #   ./run_uncertainty_m3.sh resume           archive-repair, main, climate, finalise in sequence
-#   ./run_uncertainty_m3.sh pure-west        the whole weathering chain again after the switch to the pure West form for sulfides (2026-10-05):
-#                                            park-tables, then main, runoff-tests, distribution-tests, martin-lamb, orogen-tracks, reactivity,
-#                                            gospl-published, ensemble, climate, dyntopo (no surfaces kept), dyntopo-controls, finalise, number audit,
-#                                            all figures, videos, and a freshness check (GPU; most of a day). Erosion fields, OCTOPUS and the direct
-#                                            goSPL comparison (paired with its preserved run, published exponent) are unchanged and not re-run.
-#   ./run_uncertainty_m3.sh pure-west-gpu    the second half of pure-west alone (ensemble, climate, dyntopo, controls, finalise, audit, figures, videos,
-#                                            check): resumes the GPU experiments after an interruption without repeating the CPU steps
-#   ./run_uncertainty_m3.sh longterm         the whole chain again after moving the calibration targets to the long-term footing (2026-10-08):
-#                                            parks the tables as tables_short_term_targets_20261008, then as pure-west (most of a day)
-#   ./run_uncertainty_m3.sh park-tables      copy every result table, the audit and the figures to the SSD (PARK_ROOT) as the record of the
-#                                            published-exponent results, and move there the resumable tables, so that their steps start afresh
+#   ./run_uncertainty_m3.sh pure-west        every result that depends on the weathering form, recomputed from the erosion archive (named after
+#                                            the West (2012) form of the sulfide runoff term): park-tables (unless the run has already started),
+#                                            then main, runoff-tests, distribution-tests, martin-lamb, orogen-tracks, orogen-events, reactivity,
+#                                            gospl-published and pure-west-gpu (GPU; most of a day). Erosion fields, OCTOPUS and the direct
+#                                            goSPL comparison (paired with its preserved run, published exponent) do not depend on it and are not re-run.
+#   ./run_uncertainty_m3.sh pure-west-gpu    the second half of pure-west alone (ensemble, climate, dyntopo with no surfaces kept, dyntopo-controls,
+#                                            finalise, number audit, all figures, videos, pure-west-check): resumes the GPU experiments after an
+#                                            interruption without repeating the CPU steps
+#   ./run_uncertainty_m3.sh pure-west-check  lists the result tables that are missing or older than the start of the run (RUN_TAG)
+#   ./run_uncertainty_m3.sh longterm         pure-west under the run tag 'longterm', with its own park folder (PARK_NAME); repeat the same
+#                                            command to resume (most of a day)
+#   ./run_uncertainty_m3.sh park-tables      copy every result table, the audit and the figures to PARK_ROOT/PARK_NAME as a record of the
+#                                            previous results, and move there the resumable tables, so that their steps start afresh;
+#                                            writes the start marker of RUN_TAG
 #
 # The ensemble and the climate experiment both use the GPU: run them one after the other, not together.
 # Every step writes ONE table and can be repeated safely. Extra arguments are passed to the step.
+#
+# Environment: NEUROLEM_PY (Python with PyTorch, for the GPU steps), ANALYSIS_PY (Python for tables and figures;
+# default python3, or NEUROLEM_PY if python3 lacks numpy, pandas, scipy or matplotlib), NEUROLEM_CO2_DATA (companion
+# data archive), PALEO_ROOT (palaeotopography assimilation checkout), PARK_ROOT and PARK_NAME (where park-tables
+# copies to), RUN_TAG (name of the start marker used by pure-west and pure-west-check; default pure_west).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; cd "$HERE"
 PY="${NEUROLEM_PY:-python3}"
-[[ -x "$PY" ]] || { echo "NEUROLEM_PY is not executable: $PY" >&2; exit 3; }
+[[ -x "$PY" ]] || PY="$(command -v python3 || true)"          # fall back to python3 on the PATH
+[[ -n "$PY" && -x "$PY" ]] || { echo "no usable Python: set NEUROLEM_PY" >&2; exit 3; }
 # GPU steps use the PyTorch environment; tables and the figure use the Python on the PATH (override with ANALYSIS_PY)
 APY="${ANALYSIS_PY:-python3}"
 "$APY" -c 'import numpy, pandas, scipy, matplotlib' 2>/dev/null || APY="$PY"
 STEP="${1:-status}"; shift || true
 
+# the filled runoff-ratio table (fill_runoff_ratio.py) is built the first time a step needs it
 need_ratio() { [[ -e "$HERE/../../data/nature_recast/hadcm3l_runoff_ratio_filled.npz" ]] || "$APY" fill_runoff_ratio.py; }
 
 case "$STEP" in
@@ -92,9 +104,9 @@ case "$STEP" in
     resume-surface) "$0" rebuild-surface; "$0" main || echo "main step reported an error (see above); going on"
                    "$0" runoff-tests; "$0" distribution-tests; "$0" octopus || echo "octopus step reported an error (geopandas installed?); going on"
                    "$0" ensemble; "$0" climate; "$0" gospl-published
-                   "$0" gospl || echo "gospl step skipped (SSD not mounted?)"; "$0" reactivity; "$0" finalise; "$0" provenance ;;
+                   "$0" gospl || echo "gospl step skipped (direct goSPL run bundle not found?)"; "$0" reactivity; "$0" finalise; "$0" provenance ;;
     resume-experiments) "$0" ensemble; "$0" climate; "$0" gospl-published
-                   "$0" gospl || echo "gospl step skipped (SSD not mounted?)"; "$0" reactivity; "$0" finalise; "$0" provenance ;;
+                   "$0" gospl || echo "gospl step skipped (direct goSPL run bundle not found?)"; "$0" reactivity; "$0" finalise; "$0" provenance ;;
     archive-check)  "$PY" -u check_archive.py "$@" ;;
     archive-repair) "$PY" -u check_archive.py --repair "$@" ;;
     main)          ZEN="${NEUROLEM_CO2_DATA:-$HERE/../../../neurolem_CO2_zenodo_data}"; ZIP="$ZEN/nature_recast_cache.zip"
@@ -110,9 +122,9 @@ case "$STEP" in
     gospl-published) need_ratio; "$APY" -u gospl_published_sensitivity.py "$@" ;;
     resume)        "$0" archive-repair; "$0" main || echo "main step reported an error (see above); going on with the climate run"
                    "$0" climate; "$0" finalise ;;
-    after-ensemble) "$0" climate; "$0" gospl || echo "gospl step skipped (SSD not mounted?)"; "$0" cache; "$0" finalise ;;
-    park-tables)   PARK="${PARK_ROOT:-parked_tables}/${PARK_NAME:-tables_sulfide_exponent_published_20261005}"
-                   [[ -d "$(dirname "$PARK")" ]] || { echo "SSD folder $(dirname "$PARK") not found: mount the SSD or set PARK_ROOT" >&2; exit 4; }
+    after-ensemble) "$0" climate; "$0" gospl || echo "gospl step skipped (direct goSPL run bundle not found?)"; "$0" cache; "$0" finalise ;;
+    park-tables)   PARK="${PARK_ROOT:-parked_tables}/${PARK_NAME:-tables_before_$(date +%Y%m%d)}"
+                   [[ -d "$(dirname "$PARK")" ]] || { echo "folder $(dirname "$PARK") not found: set PARK_ROOT" >&2; exit 4; }
                    D="$HERE/../../data/nature_recast"; ZEN="${NEUROLEM_CO2_DATA:-$HERE/../../../neurolem_CO2_zenodo_data}"
                    mkdir -p "$PARK/data_nature_recast" "$PARK/figures_nature" "$PARK/ensemble"
                    shopt -s nullglob
@@ -142,10 +154,9 @@ case "$STEP" in
                    for f in make_fig1_optimum.py make_fig2_maps.py make_fig3_erosion_sensitivity.py make_fig4_endmembers.py make_fig5_reactivity.py; do "$APY" "$f"; done
                    "$APY" make_videos.py || echo "videos not made (imageio-ffmpeg missing?): run python3 make_videos.py"
                    "$0" pure-west-check ;;
-    longterm)      # 2026-10-08: calibration targets on the long-term footing (silicate 72, sulfide 14.5 Mt C/yr; run_weathering.TARGET):
-                   # the whole chain again, the previous tables parked as tables_short_term_targets_20261008; resume after an
+    longterm)      # pure-west under the run tag 'longterm', the previous tables parked under PARK_NAME; resume after an
                    # interruption with the same command (or RUN_TAG=longterm ./run_uncertainty_m3.sh pure-west-gpu)
-                   export PARK_NAME=tables_short_term_targets_20261008 RUN_TAG=longterm; "$0" pure-west ;;
+                   export PARK_NAME="${PARK_NAME:-tables_before_longterm}" RUN_TAG=longterm; "$0" pure-west ;;
     pure-west-check) D="$HERE/../../data/nature_recast"; T0=$(cat "$D/.${RUN_TAG:-pure_west}_start")
                    stale=0
                    for f in kin_bridge_s2_ens.csv kin_bridge_s1_ens.csv kin_bridge_s4_ens.csv out_bridge_s2_ens.csv kin_coef_s2_ens.csv out_coef_s2_ens.csv \

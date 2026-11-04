@@ -1,16 +1,32 @@
 #!/usr/bin/env python3
-"""Build a geochemically constrained paleoelevation-correction ensemble.
+"""Build a geochemically constrained palaeoelevation-correction ensemble.
 
-This program propagates uncertainty in the geochemical observations through
-the existing Scotese--Wright assimilation.  It does *not* add pixel noise to
-the finished DEM and it does not vary the kinematic prior or the assimilation
-hyperparameters.
+Role in the paper
+-----------------
+This is the generating half of the 200-member palaeoelevation ensemble
+(Methods, "Palaeoelevation" and "Uncertainty and sensitivity", item 5;
+Supplementary Information, "Uncertainty ensembles"), which "resamples the
+mohometry uncertainty, six isostatic density structures and the sample
+weights". It propagates uncertainty in the geochemical observations through
+the rock-chemistry assimilation applied to the PALEOMAP (Scotese & Wright)
+reconstruction.  It does *not* add pixel noise to the finished DEM and it does
+not vary the kinematic prior or the assimilation hyperparameters.  The member
+corrections are passed through NeuroLEM and the weathering calculation by
+``nature_recast/apply_ensemble_sensitivity.py`` (or ``apply_geochem_ensemble.py``).
 
-For each ensemble member it varies only quantities permitted by the input
-geochemical table:
+What is varied
+--------------
+Each sample's elevation comes from its crustal thickness Z_c through the
+time-dependent Airy relation H = (rho_m(t) - rho_c(t)) / rho_m(t) * (Z_c - Z_0),
+with crustal and lithospheric-mantle densities set by the mantle potential
+temperature of one of six published thermal histories (Supplementary Methods).
+The assimilation's sample table carries, for every history, the elevation (km)
+implied by the low, central and high thickness estimates.  For each ensemble
+member this program varies only quantities permitted by that table:
 
 1. one of the six published isostatic conversions is selected for the whole
-   member (a spatially coherent structural choice);
+   member (a spatially coherent structural choice; the central product uses
+   their mean);
 2. every sample is perturbed within its model-specific low/mid/high
    crustal-thickness envelope (the bounds are treated as approximately 2
    standard deviations and draws are truncated at those bounds);
@@ -35,17 +51,40 @@ when the loaded assimilation code defines it, so the chain reproduces whichever 
 builds. Before any member is drawn, the chain run on the unperturbed observations must reproduce the
 production grid of --central-dir to PARITY_TOL_M; otherwise nothing is written.
 
-Two compact files can be written per age:
+Inputs
+------
+The assimilation code and data of the pinned paleotopo-data-assimilation
+checkout (see below): the 1-degree PALEOMAP grid M_orig of each age (m), the
+geochemical sample table with its per-model elevation columns, the plate
+model and continent masks.  ``--central-dir`` holds the production grids
+<age>Ma_corrected_SW.nc (M_orig, M_corrected, delta in m) of the adopted
+surface.
+
+Outputs
+-------
+Two compact files can be written per age, all fields on the 1-degree grid in
+metres:
 
   <age>Ma_geochem_ensemble_summary.nc
-      p05, p50, p95, mean and standard deviation of the correction, plus the
-      existing production correction.  Elevation is recovered by adding any
-      correction field to M_orig.
+      delta_lower_p05, delta_median_p50, delta_upper_p95, delta_ensemble_mean
+      and delta_ensemble_sd of the correction, plus delta_production_central,
+      the production correction; int16 at 1 m precision.  Elevation is
+      recovered by adding any correction field to M_orig.  Also continent_mask
+      and, as attributes, the dependency provenance, member chain and parity.
 
   <age>Ma_geochem_ensemble_members.nc          (--write-members)
-      the temporary member cube used by NeuroLEM.  Corrections are rounded to
-      one metre and packed as compressed int16.  The NeuroLEM controller is
-      expected to delete this file after it has processed the age.
+      the temporary member cube used by NeuroLEM: delta_member (member, lat,
+      lon), rounded to one metre and packed as compressed int16;
+      isostatic_model_index (member); delta_central (float32).  The NeuroLEM
+      controller is expected to delete this file after it has processed the
+      age.
+
+and one table for all ages processed so far, geochem_elevation_ensemble_summary.csv
+in --out-dir: per age, the land-mean and RMS of the central correction, the
+ensemble-mean correction, mean standard deviation, mean and 95th-percentile
+p05-p95 width, the parity of the member chain and the fraction of continental
+cells where the central correction lies outside p05-p95 (all over the
+continent mask, m).  Rows of re-run ages are replaced.
 
 Examples
 --------
@@ -93,7 +132,7 @@ import pandas as pd
 #   2. $PALEOTOPO_PROJECT_ROOT/public_repo_scotese/scripts
 #   3. $PALEOTOPO_PROJECT_ROOT/scripts_Scotese
 #
-# The published clone is preferred over the private production tree so that a
+# The published clone layout is tried before the development layout so that a
 # reader who checks out the pinned tag gets byte-identical code.  Data still
 # resolves through paths_scotese.PROJECT_ROOT, so PALEOTOPO_PROJECT_ROOT should
 # point at the tree that actually holds data/.
@@ -101,6 +140,7 @@ PALEOTOPO_PIN = "v1.1.0"            # tag in paleotopo-data-assimilation (reach 
 
 
 def _resolve_paleotopo_scripts() -> Path:
+    """Directory holding assimilate_scotese.py, in the resolution order above."""
     explicit = os.environ.get("PALEOTOPO_SCRIPTS")
     if explicit:
         d = Path(explicit).expanduser().resolve()
@@ -161,6 +201,8 @@ from plate_model_utils_scotese import cob_mask          # noqa: E402
 from sw_io import load_grid as sw_load_grid, nearest_cell_index  # noqa: E402
 
 PALEOTOPO_PROVENANCE = paleotopo_provenance(_PALEOTOPO_SCRIPTS)
+# Human-readable list of the assimilation stages the member chain repeats, built from
+# the switches of the loaded code and recorded in every output file.
 _reach = getattr(A, "RESID_REACH_KM", None)
 MEMBER_CHAIN = ("decluster" + ("; samples on PALEOMAP sea dropped" if getattr(A, "DROP_SEA_SITED_SAMPLES", False) else "")
                 + "; province rescale; local-support and province-edge tapers; cross-boundary smoothing; residual kernel"
@@ -168,6 +210,9 @@ MEMBER_CHAIN = ("decluster" + ("; samples on PALEOMAP sea dropped" if getattr(A,
                 + "; finalise; young-age taper")
 
 
+# Labels of the six isostatic conversions (mantle thermal histories of Herzberg et al.
+# for Urey ratios 0.08, 0.23 and 0.38, Brown et al., Davies and Condie et al.;
+# Supplementary Methods), in the column order of A.ELEV_MODELS_* below.
 MODEL_NAMES = (
     "Herzberg_0.23",
     "Brown_2022",
@@ -183,11 +228,12 @@ MODEL_LOW = tuple(A.ELEV_MODELS_LOW)
 MODEL_HIGH = tuple(A.ELEV_MODELS_HIGH)
 
 DEFAULT_MEMBERS = 200
-DEFAULT_SEED = 20260814
+DEFAULT_SEED = 20260814     # fixed so every age (and every re-run) draws the same sample perturbations
 DEFAULT_QUANTILES = (0.05, 0.50, 0.95)
 
 
 def _closed_continent_mask(t, lat, lon, M):
+    """Continental mask (bool, lat x lon) of age ``t``, morphologically closed as in the assimilation."""
     cont = cob_mask(t, lat, lon, M)
     if A.CONT_MASK_CLOSING_ITER and A.CONT_MASK_CLOSING_ITER > 0:
         from scipy.ndimage import binary_closing
@@ -196,7 +242,11 @@ def _closed_continent_mask(t, lat, lon, M):
 
 
 def _balanced_model_indices(n_members: int, seed: int) -> np.ndarray:
-    """Nearly equal representation of all six structural models."""
+    """Nearly equal representation of all six structural models.
+
+    Returns an int8 array of length ``n_members``: indices 0..5 repeated and
+    cut to length (counts differ by at most one), then shuffled with ``seed``.
+    """
     idx = np.tile(np.arange(len(MODEL_NAMES), dtype=np.int8),
                   int(math.ceil(n_members / len(MODEL_NAMES))))[:n_members]
     np.random.default_rng(seed).shuffle(idx)
@@ -207,9 +257,15 @@ def _draw_matrices(n_members: int, n_samples: int, seed: int):
     """Generate temporally invariant sample-level uncertainty draws.
 
     The matrices are only about 240 MB for 200 members x ~100,000 samples,
-    comfortably within the target M3/64-GB machine.  Recreating them with the
+    comfortably within a 64-GB machine.  Recreating them with the
     same seed for each age produces exactly the same sample draws, allowing
     the two-environment, one-age-at-a-time controller to remain stateless.
+
+    Returns three float32 arrays of shape (n_members, n_samples), indexed by
+    the stable sample identifier: ``thick_z`` and ``quality_z``, standard
+    normal draws truncated at +/-2, for the thickness envelope and the
+    missing-data error; ``bootstrap``, Exp(1) Bayesian-bootstrap weight
+    multipliers clipped to [1e-4, 10].
     """
     rng = np.random.default_rng(seed)
     shape = (n_members, n_samples)
@@ -237,7 +293,15 @@ def _decluster(df: pd.DataFrame, lat, lon, M):
 
 
 def _prepare_age(age: int):
-    """Prepare all age-invariant objects once, before looping over members."""
+    """Prepare all age-invariant objects once, before looping over members.
+
+    Returns a dict with the PALEOMAP grid M (m) and its lat/lon, the continent
+    mask, the samples restored to this age and on continental cells (df), their
+    declustered central set (dec0), the province raster built from dec0 (P_g)
+    and the local-support and province-edge taper weights (or None when the
+    assimilation disables them).  These structural objects are held fixed for
+    all members, so members differ only in the sample values and weights.
+    """
     M, lat, lon = sw_load_grid(age)
     M = np.asarray(M, dtype=np.float64)
     lat = np.asarray(lat, dtype=np.float64)
@@ -256,6 +320,7 @@ def _prepare_age(age: int):
     df = A.prepare_samples(geochem, age)
 
     if not df.empty:
+        # keep only samples whose palaeoposition falls on the continent mask
         iy = nearest_cell_index(lat, df["rlat"].values)
         ix = nearest_cell_index(lon, df["rlon"].values)
         df = df[cont[iy, ix]].reset_index(drop=True)
@@ -275,6 +340,8 @@ def _prepare_age(age: int):
     P_g = A.despeckle_province_raster(P_g, cont)
 
     if A.LOCAL_SUPPORT_KM and A.LOCAL_SUPPORT_KM > 0:
+        # weight decreasing linearly from 1 at a sample to 0 at LOCAL_SUPPORT_KM
+        # (400 km in the adopted product)
         dist_km = A.nearest_sample_distance_grid(lat, lon, dec0)
         w_local = np.clip(1.0 - dist_km / A.LOCAL_SUPPORT_KM, 0.0, 1.0)
     else:
@@ -290,7 +357,14 @@ def _prepare_age(age: int):
 
 
 def _finish_member(prep, df_member: pd.DataFrame):
-    """Run the member-dependent stages with all structural choices fixed."""
+    """Run the member-dependent stages with all structural choices fixed.
+
+    ``df_member`` carries the member's sample elevations (z_obs_m) and weights
+    (w_raw).  Returns the member's adjusted elevation grid M_final (m, 1-degree);
+    the member correction is M_final - M.  Each step mirrors
+    assimilate_scotese.assimilate_one and is applied only if the loaded
+    assimilation enables it.
+    """
     age = prep["age"]
     M, lat, lon, cont = prep["M"], prep["lat"], prep["lon"], prep["cont"]
     if age == 0 or df_member.empty:
@@ -299,6 +373,7 @@ def _finish_member(prep, df_member: pd.DataFrame):
     dec = _decluster(df_member, lat, lon, M)
     if dec.empty:
         return M.copy()
+    # quantile-by-quantile remapping of the reference hypsometry within each province
     M3_raw = A.province_rescale(M, prep["P_g"], dec, cont,
                                 n_min_p=A.N_MIN_P)
     if prep["w_local"] is not None:
@@ -314,6 +389,7 @@ def _finish_member(prep, df_member: pd.DataFrame):
                                              A.CROSS_BOUNDARY_SIGMA)
         M3 = M + dz_prov
 
+    # residuals at the samples spread with a Gaussian kernel of length RESID_LS_KM
     residual, _n_eff = A.smoothed_residual(
         M3, prep["P_g"], dec, lat, lon, cont, ls_km=A.RESID_LS_KM)
     reach = getattr(A, "RESID_REACH_KM", None)
@@ -322,6 +398,8 @@ def _finish_member(prep, df_member: pd.DataFrame):
         d0, d1 = reach
         dist_r = A.nearest_sample_distance_grid(lat, lon, dec)
         residual = residual * np.clip((d1 - dist_r) / max(d1 - d0, 1e-6), 0.0, 1.0)
+    # the assimilation's finalisation step (A.finalise), then, at young ages, the
+    # taper of the correction towards zero at the present day
     M_final = A.finalise(M, M3 + residual, cont)
     if A.young_taper_ramp(age) < 1.0:
         M_final = A.apply_young_taper(age, M, M_final, cont)
@@ -331,7 +409,13 @@ def _finish_member(prep, df_member: pd.DataFrame):
 def _member_observations(base_df: pd.DataFrame, model_idx: int,
                          thick_z: np.ndarray, quality_z: np.ndarray,
                          bootstrap: np.ndarray):
-    """Return a member dataframe with geochem-permitted z and weight draws."""
+    """Return a member dataframe with geochem-permitted z and weight draws.
+
+    ``model_idx`` selects the isostatic model; ``thick_z``, ``quality_z`` and
+    ``bootstrap`` are this member's rows of the draw matrices, indexed by the
+    stable sample identifier.  Sets ``z_obs_m`` (sample elevation, m) and
+    multiplies the declustering weights ``w_raw`` by the bootstrap multipliers.
+    """
     out = base_df.copy()
     sid = out["_ensemble_sample_id"].to_numpy(dtype=np.int64)
 
@@ -345,6 +429,7 @@ def _member_observations(base_df: pd.DataFrame, model_idx: int,
     mid = out[MODEL_MID[model_idx]].to_numpy(dtype=float)
     low = out[MODEL_LOW[model_idx]].to_numpy(dtype=float)
     high = out[MODEL_HIGH[model_idx]].to_numpy(dtype=float)
+    # where the chosen model has no value for a sample, use the mean of the models that do
     mid = np.where(np.isfinite(mid), mid, fallback_mid)
     low = np.where(np.isfinite(low), low, fallback_low)
     high = np.where(np.isfinite(high), high, fallback_high)
@@ -352,15 +437,21 @@ def _member_observations(base_df: pd.DataFrame, model_idx: int,
     # Enforce the data-provided ordering without inventing a wider interval.
     low = np.minimum(low, mid)
     high = np.maximum(high, mid)
+    # Asymmetric envelope: low and high are taken as -2 and +2 standard deviations,
+    # so a negative draw scales by (mid - low)/2 and a positive one by (high - mid)/2.
     zt = thick_z[sid].astype(np.float64)
     scale_km = np.where(zt < 0.0, (mid - low) / 2.0,
                         (high - mid) / 2.0)
     z_km = mid + zt * scale_km
 
+    # Missing-data risk of the sample (km, 0 where absent), converted to an elevation
+    # error (m) with the assimilation's KAPPA_QUALITY factor and scaled by a truncated
+    # standard normal draw.
     miss = out.get("Missing_Risk_DeltaT (km)",
                    pd.Series(0.0, index=out.index)).fillna(0.0).to_numpy(float)
     z_m = z_km * 1000.0 + quality_z[sid] * A.KAPPA_QUALITY * miss
 
+    # Bayesian bootstrap: Exp(1) multipliers normalised to mean 1 over this age's samples
     wb = bootstrap[sid].astype(np.float64)
     finite_positive = np.isfinite(wb) & (wb > 0)
     if finite_positive.any():
@@ -374,6 +465,10 @@ def _member_observations(base_df: pd.DataFrame, model_idx: int,
 
 
 def _read_production_delta(age: int, M: np.ndarray, central_dir: Path | None):
+    """Production correction (float32, m) of ``age`` from ``central_dir``, or None if absent.
+
+    Reads the ``delta`` variable, else M_corrected - M_orig.  ``M`` is unused.
+    """
     if central_dir is None:
         return None
     p = central_dir / f"{age}Ma_corrected_SW.nc"
@@ -393,6 +488,15 @@ def generate_age_ensemble(age: int, n_members: int = DEFAULT_MEMBERS,
 
     The returned ``delta_members`` array has shape ``(member, lat, lon)`` and
     dtype float32.  It is only ~52 MB for 200 members on the 1-degree grid.
+
+    Before any member is drawn, the chain is run on the unperturbed
+    observations and compared with the production grid of ``central_dir``;
+    a largest difference above PARITY_TOL_M stops the program.  The result
+    dict also holds the p05/p50/p95, mean and standard deviation of the
+    member corrections, the production central correction (recomputed from
+    the unperturbed chain if no production grid exists), the model index of
+    every member, the continent mask, the seed, the parity (m) and the wall
+    time (s).
     """
     start = time.time()
     prep = _prepare_age(int(age))
@@ -454,7 +558,12 @@ def generate_age_ensemble(age: int, n_members: int = DEFAULT_MEMBERS,
 
 def _packed_i2(ds, name, dims, values, long_name, units="m",
                complevel=6, chunksizes=None):
-    """Write metre-valued data as shuffled/DEFLATE-compressed int16."""
+    """Write metre-valued data as shuffled/DEFLATE-compressed int16.
+
+    Values are rounded to whole metres and clipped to +/-32767; -32768 is the
+    fill value.  scale_factor = 1 and add_offset = 0 are recorded, so readers
+    that apply CF unpacking recover metres directly.
+    """
     arr = np.asarray(values)
     packed = np.rint(arr).clip(-32767, 32767).astype(np.int16)
     kwargs = dict(zlib=True, complevel=complevel, shuffle=True)
@@ -472,6 +581,7 @@ def _packed_i2(ds, name, dims, values, long_name, units="m",
 
 
 def write_summary(result, path: str | Path):
+    """Write the per-age summary netCDF (quantiles, mean, sd and production correction, int16 m)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with nc.Dataset(path, "w", format="NETCDF4") as ds:
@@ -551,6 +661,7 @@ def write_members(result, path: str | Path, seed: int):
 
 
 def _summary_row(result):
+    """One row of the summary CSV: land statistics (m) over the continent mask of one age."""
     cont = result["continent_mask"]
     width = result["delta_p95"] - result["delta_p05"]
     dc = result["delta_central"]
@@ -570,6 +681,7 @@ def _summary_row(result):
 
 
 def main():
+    """Build the ensemble for each age on the command line and write its outputs."""
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("ages", nargs="+", type=int,

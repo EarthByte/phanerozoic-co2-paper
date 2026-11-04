@@ -1,5 +1,11 @@
 """Shared evaluation of the weathering quantities for the uncertainty experiments.
 
+Library used by climate_sensitivity.py (climate states), gospl_validation_sensitivity.py and
+gospl_published_sensitivity.py (goSPL against NeuroLEM) and dyntopo_sensitivity.py (dynamic
+topography): the evaluation of run_weathering.py packaged for any grid or mesh, so that the
+experiments behind Extended Data Figs 3, 5 and 6 and the Supplementary Information are computed
+exactly as the main model.
+
 Depends on numpy only (the climate experiment must run where scipy, pandas and netCDF4 are absent).
 The calibration amplitudes and the E_opt(runoff) table are read from the main run, never refitted,
 so every experiment differs from the main model in exactly the input it perturbs.
@@ -16,6 +22,8 @@ import _config as cfg
 import weathering_core as wc
 import run_weathering as rw
 
+# columns of run_weathering.summarise kept for each surface on its own land, and (suffix _common) on the land of the
+# reference surface; METRIC_COLUMNS adds the silicate sensitivity and sink of each parameter set (own land)
 KEEP = ['land_Mkm2', 'eroding_Mkm2', 'E_mean_eroding_mm', 'q_mean_mm', 'D_Gt',
         'F_sil', 'F_sulf', 'F_net', 'F_ocp', 'F_ocb', 'S_sil', 'S_sulf', 'S_net',
         'S_net_oc_rel_sil', 'S_total_rel_sil', 'Gamma_sil', 'WI', 'd7Li_riv',
@@ -23,18 +31,26 @@ KEEP = ['land_Mkm2', 'eroding_Mkm2', 'E_mean_eroding_mm', 'q_mean_mm', 'D_Gt',
 KEEP_COMMON = ['D_Gt', 'F_sil', 'F_net', 'S_sil', 'S_net', 'beyond_frac_eroding']
 METRIC_COLUMNS = (KEEP + [f'{k}_common' for k in KEEP_COMMON] + [f'S_sil_{r}' for r in rw.SETS]
                   + [f'F_sil_{r}' for r in rw.SETS])
+# runoff ratio on the HadCM3L grid, extended over the ocean (written by fill_runoff_ratio.py)
 RATIO_FILLED = cfg.OUT / 'hadcm3l_runoff_ratio_filled.npz'
 
 
 def load_calibration(main_prefix):
+    """Calibration of the main run with prefix `main_prefix` (e.g. data/nature_recast/kin_bridge_s2).
+
+    Reads <prefix>_amplitudes.txt and <prefix>_hist.npz. Returns (amps, amp_oc, settings, qgrid, eopt_q): the
+    silicate and sulfide amplitudes per set, the organic-carbon amplitudes, the run settings as strings (mode, qsrc,
+    scale, oc_form, beta_sulf, ...), the runoff axis (mm/yr) and E_opt at each runoff (mm/yr). Exits if the main run
+    used a form the evaluators do not implement or a runoff source other than the HadCM3L runoff ratio.
+    """
     lines = Path(f'{main_prefix}_amplitudes.txt').read_text().strip().splitlines()
     amps, amp_oc = ast.literal_eval(lines[0]), ast.literal_eval(lines[1])
     settings = dict(re.findall(r"(\w+)=(\{[^}]*\}|\S+)", lines[2]))     # values may be dict reprs with spaces (driver={...})
-    # the experiments evaluate every surface with the weathering form of the main model; the forms the main run can take
-    # beyond the published one (sulfide exponent, reference-runoff scaling, precipitation-driven sets, log-stretch) are not carried by
-    # the shared evaluator yet, so a main run in one of those forms must not be silently paired with it
-    # the sulfide runoff exponent is carried: every surface is evaluated with the exponent of the paired main run (the live main run uses
-    # the pure West form; the preserved run of the direct goSPL surfaces, data/nature_recast/gospl_surfaces/, the published -0.75)
+    # every surface is evaluated with the weathering form of the paired main run. The sulfide runoff exponent is carried over
+    # by setting weathering_core.BETA for the rest of the process (the main run uses the West form, 0; the run preserved with the
+    # direct goSPL surfaces in data/nature_recast/gospl_surfaces/ uses the published -0.75; a file without the field means -0.75).
+    # The other forms a run can take (reference-runoff scaling, precipitation-driven sets, log-stretch) are not implemented in
+    # the evaluators, so a main run in one of those forms is refused rather than silently paired with them
     wc.BETA['sulfide'] = float(settings.get('beta_sulf', '-0.75'))
     if (settings.get('qref_scale', 'none') != 'none' or "'precip'" in settings.get('driver', '')
             or float(settings.get('stretch', 1)) != 1.0):
@@ -49,7 +65,13 @@ def load_calibration(main_prefix):
 
 
 class Evaluator:
-    """Weathering of one age on a fixed set of cells (1-D arrays; any grid or mesh)."""
+    """Weathering of one age on a fixed set of cells (1-D arrays; any grid or mesh).
+
+    cells     flat indices of the cells to evaluate (land on any surface considered)
+    A         cell (or mesh-vertex) areas in m2 on the full flattened grid
+    cal       (amps, amp_oc, qgrid, eopt_q) from load_calibration
+    settings  run settings from load_calibration (mode, oc_form and the erosion scale are used)
+    """
 
     def __init__(self, cells, A, cal, settings):
         self.cells, self.A = cells, np.asarray(A, float)[cells]
@@ -58,10 +80,15 @@ class Evaluator:
         self.fitsets = {r: wc.load_fits(rw.PARAMS, [r]) for r in rw.SETS}
 
     def __call__(self, erodep, mask, ref_mask, q, T):
-        """erodep (mm/yr, negative = erosion), masks, runoff (mm/yr) and temperature (K) on the full arrays."""
+        """erodep (mm/yr, negative = erosion), masks, runoff (mm/yr) and temperature (K) on the full arrays.
+
+        `mask` is the land of the surface evaluated, `ref_mask` the land of the reference surface. Returns a dict
+        with the columns of METRIC_COLUMNS: fluxes in Gt C/yr, sensitivities and shares dimensionless.
+        """
         c = self.cells
         m = np.asarray(mask)[c]; mref = np.asarray(ref_mask)[c]
         q = np.asarray(q, float)[c]; T = np.asarray(T, float)[c]
+        # erosion on the land of either surface, times the calibration factor of the main run
         E = np.where(m | mref, np.maximum(-np.asarray(erodep)[c].astype(float), 0.0), 0.0) * self.scale
         terms = {r: rw.region_terms(E, q, T, self.fitsets[r], self.mode) for r in rw.SETS}
         cal = {r: {k: self.amps[r]['sil' if 'sil' in k else 'sulf'] * terms[r][k] for k in ('sil', 'dsil', 'sulf', 'dsulf')}
@@ -72,6 +99,7 @@ class Evaluator:
         ocp, docp = self.amp_oc['ocp'] * Jp / 12.011, self.amp_oc['ocp'] * dJp / 12.011
         ocb, docb = self.amp_oc['ocb'] * Jb / 12.011, self.amp_oc['ocb'] * dJb / 12.011
         args = (ens['sil'], ens['dsil'], ens['sulf'], ens['dsulf'], g, ocp, docp, ocb, docb, self.eopt_q, self.qgrid)
+        # the same cell fluxes integrated over the land of this surface and over the land of the reference surface
         own = rw.summarise(E, q, m, self.A, *args)
         com = rw.summarise(E, q, mref, self.A, *args)
         out = {k: own[k] for k in KEEP}
@@ -88,7 +116,11 @@ _RATIO = None
 
 def ratio_at(age, lat, lon):
     """Runoff ratio at points (degrees), bilinear from the nearest-land-filled model grid.
-    Identical to the field build_cache.py puts on the 0.1-degree grid."""
+    Identical to the field build_cache.py puts on the 0.1-degree grid.
+
+    The table has ascending latitude and longitude -180..180 with one wrap column on either side, on regular
+    axes, so the fractional indices are computed directly; points beyond the table take its edge values.
+    """
     global _RATIO
     if _RATIO is None:
         if not RATIO_FILLED.exists():
@@ -107,7 +139,8 @@ def ratio_at(age, lat, lon):
 
 
 def ratio_grid(age, lat, lon):
-    """The same on a regular grid given by its axes."""
+    """The same on a regular grid given by its axes (float32, len(lat) x len(lon)); computed 200 rows at a time to
+    bound memory on the 1801 x 3601 grid."""
     out = np.empty((lat.size, lon.size), np.float32)
     for a in range(0, lat.size, 200):
         LA, LO = np.meshgrid(lat[a:a + 200], lon, indexing='ij')
@@ -116,7 +149,8 @@ def ratio_grid(age, lat, lon):
 
 
 def blocks_done(path, key, n_rows):
-    """Values of column `key` that hold exactly n_rows rows."""
+    """Values of column `key` (as int) that hold exactly n_rows rows in the csv at `path`: the completed blocks
+    (ages) of a resumable experiment. Empty if the file does not exist."""
     if not Path(path).exists():
         return set()
     count = {}
@@ -141,6 +175,7 @@ def append_rows(path, header, rows, key):
         rd = csv.DictReader(fh)
         if rd.fieldnames != list(header):
             raise SystemExit(f'{path} has different columns; move it aside before writing a new experiment')
+        # rows of any earlier, possibly interrupted, attempt at this block are dropped
         kept = [r for r in rd if str(int(float(r[key]))) != str(int(float(block)))]
         n_old = rd.line_num - 1
     if len(kept) != n_old:

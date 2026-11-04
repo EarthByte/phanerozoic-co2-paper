@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""The two open forks of the runoff treatment, quantified against the main model.
+"""The two forks of the runoff treatment, quantified against the main model.
+
+Methods, "Runoff in the weathering law", and Supplementary Methods: (1) the sulfide runoff exponent, the
+West form (beta = 0, main model) against the beta = -0.75 of Bufe et al. (2024); (2) the water variable of the
+Sichuan (eastern Tibetan Plateau) parameter set, whose reference was estimated from satellite precipitation:
+converted to runoff with the simulated runoff ratio of that region (0.62), or the set driven by precipitation.
 
 Runs the weathering evaluation of the main model (kin_bridge_s2: runoff in the rate constant, HadCM3L
 runoff ratio, erosion scale 2) under four alternative forms and sets them beside it:
@@ -10,19 +15,22 @@ runoff ratio, erosion scale 2) under four alternative forms and sets them beside
   Sichuan driven by precipitation + published exponent --sichuan-precip --beta-sulf -0.75
 
 Each variant is a full run of run_weathering.py from the input cache (CPU, minutes each), written to
-data/nature_recast/rft_<name>_*. ONE table comes out, data/nature_recast/runoff_form_tests.csv:
-Phanerozoic-mean, minimum and maximum silicate sensitivity, mean net sensitivity, mean share of eroding
-land beyond the optimum and its values at 480 and 0 Ma, mean kinetically limited share, mean silicate
-sink, and the largest absolute difference from the main model in S_sil and S_net at any age. The main
-model's own row is read from its table, never re-run here.
+data/nature_recast/rft_<name>_* (log in log_rft_<name>.txt). ONE table comes out,
+data/nature_recast/runoff_form_tests.csv: Phanerozoic-mean, minimum and maximum silicate sensitivity, mean
+net sensitivity, mean share of eroding land beyond the optimum and its values at 480 and 0 Ma, mean
+kinetically limited share, mean silicate sink (Gt C/yr), and the largest absolute difference from the main
+model in S_sil and S_net at any age; all on the adjusted surface, three-set mean. The main model's own row
+is read from its table, never re-run here. A variant whose table exists is not re-run unless named with
+--only or --force is given.
 
-    python3 runoff_form_tests.py [--main kin_bridge_s2] [--only NAME ...]
+    python3 runoff_form_tests.py [--main kin_bridge_s2] [--only NAME ...] [--force]
 """
 import argparse, csv, subprocess, sys
 from pathlib import Path
 import numpy as np
 import _config as cfg
 
+# (label in the table, output prefix, run_weathering.py options); the first entry is the main model itself
 VARIANTS = [
     ('pure West form (main model)', None, None),
     ('sulfide runoff exponent as published (-0.75)', 'rft_betapub', ['--beta-sulf', '-0.75']),
@@ -33,6 +41,7 @@ VARIANTS = [
 
 
 def table(prefix):
+    """Columns of <prefix>_ens.csv used here (adjusted surface, three-set mean), as arrays over age."""
     rows = list(csv.DictReader(open(f'{prefix}_ens.csv')))
     return {k: np.array([float(r[k]) for r in rows]) for k in ('age', 'S_sil_adj', 'S_net_adj', 'beyond_frac_eroding_adj', 'Gamma_sil_adj', 'F_sil_adj')}
 
@@ -59,6 +68,7 @@ def main():
             t = table(prefix)
         if not np.array_equal(t['age'], main_t['age']):
             raise SystemExit(f'{label}: ages differ from the main run')
+        # rows of 480 Ma and of the present
         i480 = int(np.argmin(np.abs(t['age'] - 480))); i0 = int(np.argmin(np.abs(t['age'])))
         out_rows.append(dict(configuration=label,
                              S_sil_mean=round(float(t['S_sil_adj'].mean()), 4), S_sil_min=round(float(t['S_sil_adj'].min()), 4), S_sil_max=round(float(t['S_sil_adj'].max()), 4),

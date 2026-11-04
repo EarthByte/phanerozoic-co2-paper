@@ -11,17 +11,17 @@ and a surface adjusted with crustal thickness from chemical mohometry. Field-cal
 (Bufe et al., 2024) are evaluated in every 0.1° land cell under the climate of each age to give silicate
 weathering, sulfide oxidation, net inorganic CO₂ drawdown, the local drawdown optimum and the erosion
 sensitivity of each flux; rock organic-carbon oxidation and biospheric burial are added as global scalings.
-The repository reproduces every result table, figure and number of the paper.
+With the data archive, the repository recomputes the result tables, figures and the numbers quoted in the paper.
 
 ## Layout
 
 | Path | Content |
 |---|---|
-| `scripts/nature_recast/` | the workflow: weathering laws, runs, sensitivity tests, figures, number audit (`README.md` and `RUNBOOK.md` there) |
-| `scripts/` | shared modules (figure style with automatic lettering and collision checks, map projection, paths) and the palaeoelevation, ensemble and direct-goSPL steps the workflow calls |
-| `scripts/climate_uncertainty/` | the pattern-scaling climate emulator and the CO₂ envelope |
-| `data/` | weathering-law parameters (Bufe et al., 2024), CO₂ reconstructions, isotope compilations (`data/proxies/`, provenance there) |
-| `data/nature_recast/` | the result tables (main model `kin_bridge_s2_*`, alternatives, sensitivity tests, number audit) |
+| `scripts/nature_recast/` | the workflow: weathering laws, runs, sensitivity tests, uncertainty experiments, figures, number audit (`README.md` and `RUNBOOK.md` there) |
+| `scripts/` | shared modules (figure style with automatic lettering and collision checks, map projection, paths, the single-fit weathering module) and the palaeoelevation, ensemble and direct-goSPL steps the workflow calls |
+| `scripts/climate_uncertainty/` | the pattern-scaling climate emulator and the CO₂ envelope (`README.md` there) |
+| `data/` | weathering-law parameters (Bufe et al., 2024), CO₂ reconstructions and envelope, isotope compilations (`data/proxies/`, provenance there) |
+| `data/nature_recast/` | the result tables (main model `kin_bridge_s2_*`, alternatives, sensitivity tests, uncertainty experiments, number audit) |
 | `figures/` | main, Extended Data and Supplementary figures (PNG and PDF) |
 
 ## Data
@@ -29,8 +29,8 @@ The repository reproduces every result table, figure and number of the paper.
 The gridded inputs and outputs (NeuroLEM erosion fields and palaeoelevation of both surfaces at 0.1°, the
 published goSPL fields, HadCM3L temperature, the climate emulator coefficients, the 200-member elevation
 ensemble, the dynamic-topography surfaces, the direct goSPL comparison, the NeuroLEM weights, the larger result
-arrays and the supplementary videos) are in the companion Zenodo archive, https://doi.org/10.5281/zenodo.23909274. Extract it beside
-this repository as `neurolem_CO2_zenodo_data/`, or set `NEUROLEM_CO2_DATA`:
+arrays and the supplementary videos) are in the companion Zenodo archive, https://doi.org/10.5281/zenodo.23909273.
+Extract it beside this repository as `neurolem_CO2_zenodo_data/`, or set `NEUROLEM_CO2_DATA`:
 
     working folder/
       phanerozoic-co2-paper/          this repository
@@ -41,15 +41,27 @@ this repository as `neurolem_CO2_zenodo_data/`, or set `NEUROLEM_CO2_DATA`:
 ```bash
 pip install -r requirements.txt
 cd scripts/nature_recast
-python3 build_cache.py          # once: a land-only cache of the inputs, one archive, a few minutes
-bash run_all.sh                 # the main model, the tests and the figures
-python3 verify_numbers.py       # every number the paper quotes, from the tables
+bash run_all.sh                 # input cache, main model and alternatives, reactivity, number audit, figures
 ```
 
-The figure scripts read the tables in `data/nature_recast/`; the runs and the map figures also need the cache.
-`RUNBOOK.md` lists the steps, their machine times and their checks. NeuroLEM inference (the ensemble, climate-state
-and dynamic-topography tests) needs PyTorch and a GPU or Apple-silicon MPS; the plate-model tracking of mountain
-belts needs pyGPlates.
+`run_all.sh` first writes a land-only cache of the inputs (one archive in the data folder) and then runs the main
+model and its alternatives, the reactivity calculation, the mountain statistics, `verify_numbers.py` (every number
+the paper quotes, recomputed from the tables into `data/nature_recast/number_audit.md`) and the figure scripts.
+The figure scripts and the number audit read the tables in `data/nature_recast/` and run without the cache.
+
+The sensitivity tests and uncertainty experiments run through `scripts/nature_recast/run_uncertainty_m3.sh`;
+`RUNBOOK.md` there gives the order of the steps, their machine times, hardware and built-in checks. NeuroLEM
+inference (the ensemble, climate-state and dynamic-topography tests) needs PyTorch and a GPU (CUDA or
+Apple-silicon MPS); the plate-model tracking of mountain belts needs pyGPlates.
+
+## Dependencies outside this repository
+
+Two components are released separately. The NeuroLEM model definition (`salles_unet.py`) is needed only to
+re-run NeuroLEM inference (the elevation ensemble, the climate states, the dynamic-topography test and the archive
+check); the trained weights are in the data archive. The palaeoelevation-assimilation code (modules
+`assimilate_scotese`, `paths_scotese`, `plate_model_utils_scotese` and `sw_io`) is imported only by
+`build_geochem_elevation_ensemble.py`; its output grids are read by the ensemble and dynamic-topography steps
+(`PALEO_ROOT`, see `RUNBOOK.md`).
 
 ## Licence
 

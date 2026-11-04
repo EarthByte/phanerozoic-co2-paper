@@ -9,19 +9,28 @@ keeps precipitation and surface + subsurface runoff on the model grid and writes
         ages (109), lat (73), lon (96), precip (109,73,96), runoff (109,73,96; NaN over ocean),
         puma_id (109); precipitation and runoff in mm/day as served
 
+Only the ratio runoff/precipitation is used downstream (build_cache.py, fill_runoff_ratio.py), so the
+units cancel. It is the runoff ratio of the Methods, "Climate forcing" (Extended Data Fig. 4).
+
 The table ships with the repository, so this script only needs to run to rebuild it.
 Each netCDF is downloaded to a temporary file that is removed after reading;
 use --nc-dir to read climatologies that are already on disk (<age>Ma_<puma_id>.nc).
+The simulations of a suite and their ages are taken from the PhanDA experiment list
+(_config.EXPERIMENTS); --suite selects another suite, written to hadcm3l_runoff_<suite>.npz.
+
+    python3 fetch_bridge_runoff.py [--suite scotese_spinupa] [--nc-dir DIR]
 """
 import argparse, csv, subprocess, tempfile
 from pathlib import Path
 import numpy as np, netCDF4 as nc
 import _config as cfg
 
+# annual-mean climatology of a HadCM3L run on the BRIDGE server, by PUMA run identifier
 URL = 'https://www.paleo.bristol.ac.uk/ummodel/data/{pid}/climate/{pid}a.pdclann.nc'
 
 
 def read(path):
+    """Precipitation, surface + subsurface runoff (masked ocean -> NaN), latitude and longitude of one climatology."""
     n = nc.Dataset(path)
     P = np.squeeze(n['precip_mm_srf'][:]).filled(np.nan).astype(np.float32)
     R = np.ma.filled(np.squeeze(n['srfRunoff_mm_srf'][:]) + np.squeeze(n['subsrfRunoff_mm_srf'][:]), np.nan).astype(np.float32)
@@ -47,6 +56,7 @@ def main():
                 subprocess.run(['curl', '-sS', '-f', '-m', '180', '--retry', '3', '-o', str(f), URL.format(pid=pid)], check=True)
             P, R, la, lo = read(f)
             ages.append(age); pids.append(pid); PP.append(P); RR.append(R)
+            # progress: land-sum runoff over land-sum precipitation (unweighted continental runoff ratio)
             print(age, pid, f'{np.nansum(R) / np.nansum(np.where(np.isfinite(R), P, np.nan)):.3f}', flush=True)
     out = cfg.RUNOFF if a.suite == 'scotese_spinupa' else cfg.RUNOFF.with_name(f'hadcm3l_runoff_{a.suite}.npz')
     np.savez_compressed(out, ages=np.array(ages), lat=la, lon=lo, precip=np.stack(PP), runoff=np.stack(RR), puma_id=np.array(pids))

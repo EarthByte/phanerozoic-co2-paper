@@ -9,12 +9,12 @@ abstract: >-
 type: software
 license: MIT
 version: "2.0.0"
-date-released: "2026-11-03"
+date-released: "2026-11-05"
 repository-code: "https://github.com/EarthByte/phanerozoic-co2-paper"
 references:
   - type: dataset
     title: "Mountain uplift did not strengthen the weathering CO2 sink over 540 million years: model output, inputs and result tables"
-    doi: "10.5281/zenodo.23909274"
+    doi: "10.5281/zenodo.23909273"
     authors:
       - family-names: "Müller"
         given-names: "R. Dietmar"

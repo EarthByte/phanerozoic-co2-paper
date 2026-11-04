@@ -13,6 +13,12 @@ data/nature_recast/archive_consistency.csv: RMSE and the relative difference in 
 array carried over unchanged, verifies the new file by reading it back, moves the superseded file to
 <data>/_to_delete/ (nothing is deleted) and puts the new file in its place. The input cache is then older
 than the archive; `./run_uncertainty_m3.sh main` notices that and rebuilds it.
+
+The check confirms that the archived erosion fields, from which every result is computed, are reproducible
+from the archived inputs and the published checkpoint. Columns of the table: age, surface (reference, adjusted), rmse_mm_yr (over the whole grid),
+land_erosion_inference_over_archive_minus_1 (area-weighted erosion over the land of the surface), consistent
+(yes / NO at --tolerance), repaired (date of the repair, or empty). Rows of earlier runs for other ages are
+kept. Needs PyTorch and the NeuroLEM model code (climate_uncertainty/mc_driver.py).
 """
 import argparse, csv, sys, time
 from pathlib import Path
@@ -22,6 +28,7 @@ import _config as cfg
 CU = cfg.REPO / 'scripts' / 'climate_uncertainty'
 if str(CU) not in sys.path:
     sys.path.insert(0, str(CU))
+# (surface label, palaeoelevation, erosion-deposition and land-mask arrays in erodep_<age>Ma.npz)
 PAIRS = (('reference', 'zpaleo_scotese', 'ero_scotese', 'mask_scotese'), ('adjusted', 'zpaleo_zhou', 'ero_zhou', 'mask_zhou'))
 
 
@@ -46,13 +53,16 @@ def main():
         f = cfg.ERODEP_DIR / f'erodep_{age}Ma.npz'
         with np.load(f, allow_pickle=True) as d:
             arrays = {k: d[k] for k in d.files}
+        # cos(latitude) weights: proportional to cell area on the regular grid
         lat = arrays['lat'].astype(float); w = np.cos(np.deg2rad(lat))[:, None]
         fresh = {}
         for surface, zk, ek, mk in PAIRS:
             t0 = time.time()
+            # NeuroLEM erosion-deposition (mm/yr) from the archived elevation and precipitation
             ero = model(arrays[zk].astype(np.float32), arrays['rain'].astype(np.float32))
             m = arrays[mk].astype(bool)
             rmse = float(np.sqrt(np.mean((ero - arrays[ek]) ** 2)))
+            # area-weighted erosion (negative part of the field) over the land of the surface
             I = lambda x: float(np.sum((np.maximum(-x, 0.0) * w)[m]))
             rel = I(ero) / I(arrays[ek]) - 1.0
             ok = rmse <= a.tolerance
@@ -61,6 +71,8 @@ def main():
             print(f'[{age:>3} Ma] {surface:9s} RMSE {rmse:.2e} mm/yr  land erosion {100 * rel:+.3f}%  {"ok" if ok else "MISMATCH"}  {time.time() - t0:.0f} s', flush=True)
             if not ok:
                 fresh[ek] = ero.astype(arrays[ek].dtype); failed.append((age, surface))
+        # repair: write the new file beside the old one, read it back and compare every array, then move the old file
+        # to <data>/_to_delete/ and put the new one in its place
         if fresh and a.repair:
             new = dict(arrays); new.update(fresh)
             tmp = f.with_name(f'.{f.name}.repaired.npz')

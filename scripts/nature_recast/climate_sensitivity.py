@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Climate-forcing uncertainty of the erosion sensitivity (27 climate states per age).
 
-Same design as ../climate_uncertainty/mc_driver.py, under the weathering formulation of the Nature-format
-manuscript. The climate perturbation is a two-parameter family: r = log2(pCO2 / pCO2_ref), spanning the
+The climate-state experiment of the paper (Methods, "Uncertainty and sensitivity", item 6; Extended Data
+Fig. 6; Supplementary Information, "Uncertainty ensembles"). Same design as
+../climate_uncertainty/mc_driver.py, under the weathering formulation of the Nature-format manuscript. The climate perturbation is a two-parameter family: r = log2(pCO2 / pCO2_ref), spanning the
 proxy envelope of reconstructed CO2, and z, a spatially coherent draw of the structural, fit and
 internal-variability spread of the climate model. Stage A evaluates the expensive chain on a 9 x 3 grid
 of (r, z) states at every age; stage B interpolates any number of Monte Carlo members from it.
@@ -14,7 +15,24 @@ of (r, z) states at every age; stage B interpolates any number of Monte Carlo me
           ratio of the reference simulation. ONE csv, appended age by age; resumable.
           Checks at the unperturbed state (r = 0, z = 0): the surrogate reproduces the archived erosion
           fields, and the evaluation reproduces the main-run table.
-  sample  (laptop, seconds)  draws members, interpolates, writes the age bands and the headline table.
+  sample  (CPU, seconds)  draws members, interpolates, writes the age bands and the headline table.
+
+Inputs: archived elevation, precipitation and erosion fields (surrogate_erodep/erodep_<age>Ma.npz), HadCM3L
+temperature (valdes_temperature), the emulator (phanda_sensitivity.npz), the pCO2 envelope
+(data/pco2_envelope.csv: age, co2_lo, co2_hi in ppm), the filled runoff-ratio table (fill_runoff_ratio.py),
+the NeuroLEM checkpoint (surrogate_model/best.pt) and the main run (kin_bridge_s2_amplitudes.txt, _hist.npz,
+_ens.csv).
+
+Outputs (data/nature_recast/):
+  climate_sensitivity_nodes.csv      one row per age, state and surface: node indices i_r, i_z; r (CO2 doublings from
+                                     the forcing simulation); z (standard deviations of the model spread); co2_ppm;
+                                     surface (ref, adj); T_land_C and rain_land_m (unweighted means over the reference
+                                     land, deg C and m/yr); the metrics of _evaluate.METRIC_COLUMNS
+  climate_sensitivity_bands.csv      per age: central (r = 0, z = 0) value and p05 / p50 / p95 across members of the
+                                     metrics in BAND for both surfaces, and of the adjusted-to-reference ratios
+  climate_sensitivity_headline.csv   per metric and surface: p05 / p50 / p95 across members of the time-mean, minimum
+                                     and maximum; median over ages of the p05-p95 width; the number of members with a
+                                     higher share beyond the optimum today than at 480 Ma
 
     python3 climate_sensitivity.py nodes --ages 240            # pilot, one age
     python3 climate_sensitivity.py nodes                       # all ages; re-run to resume
@@ -36,15 +54,19 @@ if str(CU) not in sys.path:
     sys.path.insert(0, str(CU))
 
 NODES_CSV = cfg.OUT / 'climate_sensitivity_nodes.csv'
+# identifying columns of the node table; HEADER adds the metrics of the shared evaluator
 ID = ['age', 'i_r', 'i_z', 'r', 'z', 'co2_ppm', 'surface', 'T_land_C', 'rain_land_m']
 HEADER = ID + ev.METRIC_COLUMNS
+# metrics that must match the main-run table at the unperturbed state
 CHECK = ['land_Mkm2', 'D_Gt', 'F_sil', 'F_net', 'S_sil', 'S_net', 'beyond_frac_eroding']
+# metrics carried into the Monte Carlo bands
 BAND = ['D_Gt', 'F_sil', 'F_net', 'F_ocp', 'S_sil', 'S_net', 'S_total_rel_sil', 'beyond_frac_eroding', 'WI', 'd7Li_riv',
         'S_sil_common', 'beyond_frac_eroding_common']
 
 
 def _register_unet(path):
-    """Load salles_unet.py by file location (two different files of that name exist on the H200)."""
+    """Load salles_unet.py by file location (--unet-py), for machines on which more than one file of that name is
+    importable, so that the network definition matching the checkpoint is used."""
     f = Path(path)
     f = f / 'salles_unet.py' if f.is_dir() else f
     if not f.exists():
@@ -56,13 +78,16 @@ def _register_unet(path):
 
 
 def cmd_nodes(a):
+    """Stage A: evaluate the (r, z) node grid at every age and append one block of rows per age (resumable)."""
     from phanda_emulator import ClimateEmulator, basegrid_axes, load_envelope, regrid_bilinear
     import mc_driver as mc
     if a.unet_py:
         _register_unet(a.unet_py)
     emu = ClimateEmulator.load(a.sensitivity)
     ages = sorted(int(x) for x in a.ages) if a.ages else list(range(0, 545, 5))
+    # pCO2 envelope (ppm) at each age; the r nodes span it in log2 about the CO2 of the forcing simulation
     lo, hi = load_envelope('csv', np.array(ages), csv_path=a.envelope_csv)
+    # components of the climate-model spread combined into z: internal variability, fit residual, structural
     terms = tuple(t for t in a.sigma_terms.split(',') if t)
     clip = tuple(a.runoff_scale_clip)
     amps, amp_oc, settings, qgrid, eopt_q = ev.load_calibration(a.main_run)
@@ -78,7 +103,9 @@ def cmd_nodes(a):
         c_lo, c_hi = float(lo[ia]), float(hi[ia])
         if not np.isfinite(c_lo):
             print(f'  [{age:>3} Ma] no pCO2 envelope; skipped'); continue
+        # node axes, each including 0 (the unperturbed state): r across the envelope, z in [-z_max, z_max]
         r_nodes, z_nodes = mc._node_axes(emu, age, c_lo, c_hi, a.n_r, a.n_z, a.z_max)
+        # rows per complete age: every state on both surfaces
         n_states = 2 * r_nodes.size * z_nodes.size
         if not a.force and age in ev.blocks_done(a.out, 'age', n_states):
             done.add(age); continue
@@ -95,23 +122,31 @@ def cmd_nodes(a):
         with np.load(cfg.TEMP_DIR / f'{age}Ma.npz') as t:
             T_ref_C = t['temp_q'].astype(np.float32) * float(t['scale']) + float(t['offset'])
         ratio = ev.ratio_grid(age, lat, lon)
+        # spherical cell areas (m2) of the 0.1-degree grid, duplicate dateline columns halved, as in build_cache.py
         A = ((6.371e6 ** 2 * np.deg2rad(0.1) ** 2) * np.cos(np.deg2rad(lat)))[:, None] * np.ones((1, lon.size))
         A[:, 0] *= 0.5; A[:, -1] *= 0.5
         cells = np.flatnonzero((mask['ref'] | mask['adj']).ravel())
         evaluate = ev.Evaluator(cells, A.ravel(), (amps, amp_oc, qgrid, eopt_q), settings)
         mref = mask['ref'].ravel(); land = mask['ref']
+        # indices of the unperturbed node (r = 0, z = 0)
         i0, j0 = int(np.argmin(np.abs(r_nodes))), int(np.argmin(np.abs(z_nodes)))
         t0 = time.time(); pending = []
         with ThreadPoolExecutor(max_workers=a.workers) as pool:      # weathering on CPU threads beside the inference
             for i, r in enumerate(r_nodes):
                 for j, z in enumerate(z_nodes):
+                    # perturbation on the emulator grid: dT = lambda_T r + z sigma_T (K) and a multiplicative
+                    # precipitation factor exp(kappa_P r + z sigma_lnP), limited to --runoff-scale-clip; then
+                    # interpolated to the 0.1-degree grid
                     dT_c, rs_c = mc._perturb_coarse(emu, age, r, z, terms, 1.0, clip)
                     dT = regrid_bilinear(dT_c, emu.lat, emu.lon, blat, blon)
                     rs = regrid_bilinear(rs_c, emu.lat, emu.lon, blat, blon)
+                    # perturbed precipitation (m/yr) drives NeuroLEM; runoff (mm/yr) = precipitation x the runoff ratio
+                    # of the reference simulation
                     rain = (rain_ref * rs).astype(np.float32)
                     T_K = ((T_ref_C + dT).astype(np.float64) + 273.15).ravel()
                     q = (rain.astype(np.float64) * 1000.0 * ratio).ravel()
                     for s in ('ref', 'adj'):
+                        # NeuroLEM erosion-deposition field (mm/yr) of this surface under the perturbed precipitation
                         ero = model(zp[s], rain)
                         if i == i0 and j == j0:
                             rmse = float(np.sqrt(np.mean((ero - archived[s]) ** 2)))
@@ -122,11 +157,13 @@ def cmd_nodes(a):
                         row = dict(age=age, i_r=i, i_z=j, r=float(r), z=float(z), co2_ppm=float(emu.co2_ref(age) * 2.0 ** r), surface=s,
                                    T_land_C=float((T_ref_C + dT)[land].mean()), rain_land_m=float(rain[land].mean()))
                         pending.append((row, pool.submit(evaluate, ero.ravel(), mask[s].ravel(), mref, q, T_K)))
+                        # keep at most about 2 x workers evaluations queued, to bound memory
                         while len(pending) > 2 * a.workers and not pending[-2 * a.workers][1].done():
                             time.sleep(0.05)
             rows = []
             for row, fut in pending:
                 row.update(fut.result()); rows.append(row)
+        # second check: the unperturbed state reproduces the main-run table (relative 1e-3)
         for row in rows:
             if row['i_r'] == i0 and row['i_z'] == j0 and age in main:
                 for k in CHECK:
@@ -153,8 +190,15 @@ def _interp(node, rn, zn, r, z):
 def sample_series(a):
     """Monte Carlo members interpolated from the node table: (node table, ages, {(surface, metric): members x ages}).
     Deterministic for given nodes, n, seed and correlation choices; used by cmd_sample and by experiments that need the
-    member series over a window of ages (dyntopo_sensitivity.py)."""
+    member series over a window of ages (dyntopo_sensitivity.py).
+
+    CO2: with --co2-time-correlation independent (default) each member draws r uniformly across the node range at every
+    age; with 'full' one standard-normal draw per member is mapped through tanh onto the range at all ages. Model
+    spread: with --sigma-time-correlation full (default) one standard-normal z per member is used at all ages, clipped
+    to the node range; with 'independent' z is drawn afresh at each age.
+    """
     import pandas as pd
+    # ages with fewer rows than the most complete age (an interrupted or pilot run) are left out
     d = pd.read_csv(a.nodes)
     size = d.groupby('age').size(); full = int(size.max())
     bad = sorted(int(x) for x in size.index[size != full])
@@ -179,6 +223,7 @@ def sample_series(a):
 
 
 def cmd_sample(a):
+    """Stage B: write climate_sensitivity_bands.csv and climate_sensitivity_headline.csv from the node table."""
     import pandas as pd
     d, ages, series = sample_series(a)
     n = a.n
@@ -232,7 +277,7 @@ def main():
     q.add_argument('--sensitivity', default=str(cfg.SENS))
     q.add_argument('--envelope-csv', default=str(cfg.REPO / 'data' / 'pco2_envelope.csv'))
     q.add_argument('--ckpt', default=str(cfg.ZENODO / 'surrogate_model' / 'best.pt'))
-    q.add_argument('--unet-py', help='salles_unet.py to load by file location (required on the H200)')
+    q.add_argument('--unet-py', help='salles_unet.py to load by file location (pass it where the module is not importable)')
     q.add_argument('--device')
     q.add_argument('--n-r', type=int, default=9); q.add_argument('--n-z', type=int, default=3); q.add_argument('--z-max', type=float, default=2.5)
     q.add_argument('--sigma-terms', default='int,fit,struct')

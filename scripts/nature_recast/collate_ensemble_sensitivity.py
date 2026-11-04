@@ -13,6 +13,15 @@ Reads the ONE member table written by apply_ensemble_sensitivity.py and writes, 
                                          geochemical draws at every age, so its time series is one coherent history)
 
 Ages with an incomplete set of rows are ignored and listed.
+
+The member table has one row per age and member (columns of apply_ensemble_sensitivity.HEADER): member -2 is the
+reference surface, member -1 the mean correction, members 0..N-1 the ensemble. Ratios are member over reference
+surface of the same age; a `_common` ratio divides the member's value on the reference land by the reference
+surface's value on its own (the same) land. The headline table also holds three counts across members (column
+`mean`): members with S_sil below 0.5 at every age, with a share beyond the optimum above 0.5 at every age since
+300 Ma, and with a higher share today than at 480 Ma (Methods, "Uncertainty and sensitivity").
+
+Runs automatically at the end of run_ensemble_sensitivity_m3.sh and from `run_uncertainty_m3.sh finalise`.
 """
 import sys
 from pathlib import Path
@@ -20,6 +29,7 @@ import numpy as np, pandas as pd
 import _config as cfg
 
 DEFAULT = cfg.ZENODO / 'geochem_uncertainty_ensemble' / 'nature_recast' / 'ensemble_sensitivity_members.csv'
+# metrics summarised per age and across members; RATIOS are also expressed relative to the reference surface
 METRICS = ['D_Gt', 'E_mean_eroding_mm', 'F_sil', 'F_sulf', 'F_net', 'F_ocp', 'F_ocb', 'S_sil', 'S_net', 'S_net_oc_rel_sil',
            'S_total_rel_sil', 'beyond_frac_eroding', 'beyond_oc_frac_eroding', 'Gamma_sil', 'WI', 'd7Li_riv',
            'S_sil_Taiwan', 'S_sil_Sichuan', 'S_sil_NewZealand', 'S_sil_common', 'S_net_common', 'beyond_frac_eroding_common']
@@ -30,6 +40,7 @@ Q = (('p05', 0.05), ('p50', 0.50), ('p95', 0.95))
 def main():
     src = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT
     d = pd.read_csv(src)
+    # full member count, taken as the largest per age; a complete age has n members plus the two special rows
     n = int(d[d.member >= 0].groupby('age').size().max())
     size = d.groupby('age').size()
     bad = sorted(int(a) for a in size.index[size != n + 2])
@@ -61,6 +72,7 @@ def main():
 
     head = []
     for k in METRICS + [f'ratio_{x}' for x in RATIOS]:
+        # member x age: each member is one coherent history, so its time mean, minimum and maximum are taken first
         piv = mem.pivot(index='member', columns='age', values=k)
         for stat, v in (('time_mean', piv.mean(axis=1)), ('time_min', piv.min(axis=1)), ('time_max', piv.max(axis=1))):
             h = dict(metric=k, statistic=stat, n_members=len(v), n_ages=len(ages))

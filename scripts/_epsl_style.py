@@ -1,30 +1,46 @@
-"""EPSL / Elsevier figure style, with automatic text-collision auditing.
+"""Shared figure style and automatic text-collision checks for the paper's figures.
 
-Elsevier artwork sizing specifies printed widths of 90 mm (single column),
-140 mm (1.5 column) and 190 mm (double column), and requires lettering with a
-FINISHED, PRINTED size of at least 7 pt (6 pt for sub/superscripts), with about
-10 pt appropriate for prominent elements.
+Importing this module sets matplotlib defaults for figures authored at their
+printed size and wraps ``Figure.savefig`` so that every saved figure is audited
+for legibility first.  The style constants follow the Elsevier artwork sizing
+(printed widths of 90 mm single column, 140 mm 1.5 column and 190 mm double
+column; finished lettering of at least 7 pt, 6 pt for sub/superscripts, about
+10 pt for prominent elements).  ``nature_recast/_nature_style.py`` imports this
+module, sets the Nature artwork sizes and lowers the lettering floor
+(MIN_PT, MIN_PT_SUB) to 5 pt, and so reuses the same audit for the figures of
+the analysis in ``nature_recast/``.
 
-The failure mode this module exists to prevent: a figure authored at 15.2 in
-wide and placed at 190 mm is reduced by 0.49, so nominal 8 pt lettering prints
-at 3.9 pt. Authoring at the printed width makes the reduction factor 1.0, so
-nominal point size IS printed point size.
+Why author at printed size: a figure authored 15.2 in wide and placed at 190 mm
+is reduced by a factor of 0.49, so nominal 8 pt lettering prints at 3.9 pt.
+Authoring at the printed width makes the reduction factor 1.0, so nominal point
+size IS printed point size.
 
 Authoring at printed size has a second-order cost: lettering keeps its absolute
-size while the canvas shrinks, so labels that used to fit can now collide or run
-off the canvas. Eyeballing every panel does not scale and does not survive the
-next re-run, so `savefig` is wrapped here to audit the figure automatically and
-report, on stderr:
+size while the canvas shrinks, so labels can collide or run off the canvas.
+Checking every panel by eye does not scale and does not survive the next
+re-run, so ``savefig`` audits the figure automatically and reports, on stderr:
 
-  * text-vs-text overlaps (the same defect that stacked the three row labels of
-    Fig. 1 into an unreadable column),
-  * text running outside the canvas (which silently clipped two of Fig. 8's
-    colourbar labels), and
-  * any lettering below the 7 pt floor.
+  * lettering below the MIN_PT floor (MIN_PT_SUB for sub/superscripts),
+  * text running outside the canvas (it would be clipped in the saved file),
+  * text overflowing the box it is drawn in (schematic diagrams),
+  * text-vs-text overlaps (for example stacked row labels),
+  * axis labels longer than their axis,
+  * right-hand axes with tick labels but no axis line,
+  * legends that reach outside their axes, and
+  * text printed over other artwork (curves, fills, colour bars, a
+    neighbouring panel), measured on a re-render with all text hidden.
+
+A figure saved with ``bbox_inches='tight'`` is also reported, because a tight
+bounding box widens the figure past its printed width.
 
 Set EPSL_AUDIT=0 to silence, or EPSL_AUDIT=strict to raise instead of warn.
 
-Import this module before creating any figure.
+Import this module before creating any figure.  Typical use::
+
+    import _epsl_style
+    fig, ax = plt.subplots(figsize=_epsl_style.size(_epsl_style.DOUBLE, 15.2, 8.1))
+    ...
+    fig.savefig("fig.pdf")        # audited, then saved
 """
 import os
 import sys
@@ -35,6 +51,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.patches import FancyBboxPatch
 
+# Printed widths, in inches (matplotlib figsize units).
 MM = 1.0 / 25.4
 SINGLE = 90 * MM      # 3.543 in
 ONEHALF = 140 * MM    # 5.512 in
@@ -46,7 +63,8 @@ LARGE = 10.0          # panel letters and the few prominent labels
 
 MIN_PT = 7.0          # Elsevier floor for normal text
 MIN_PT_SUB = 6.0      # Elsevier floor for sub/superscripts
-OVERLAP_FRAC = 0.18   # ignore slight kerning touches; flag real collisions
+OVERLAP_FRAC = 0.18   # overlap as a fraction of the smaller text box; ignores slight
+                      # kerning touches and flags real collisions
 INK_TOL = 40          # per-channel 0-255 deviation counting as artwork
                       # rather than background; above a 25%-alpha
                       # gridline on white, below any real mark
@@ -60,7 +78,7 @@ UNIFORM_FRAC = 0.90   # if this much of the area behind a label is one
 plt.rcParams.update({
     "font.family": "sans-serif",
     # DejaVu first for full glyph coverage: Helvetica and Arial lack the
-    # arrows used in the workflow diagram and rendered them as tofu boxes.
+    # arrow glyphs used in the workflow diagram, which would render as empty boxes.
     "font.sans-serif": ["DejaVu Sans", "Helvetica", "Arial"],
     "font.size": BASE,
     "axes.titlesize": LARGE,
@@ -83,7 +101,13 @@ plt.rcParams.update({
 
 
 def size(width_in, old_w, old_h, min_h=2.0):
-    """Aspect-preserving figsize at an EPSL printed width."""
+    """Aspect-preserving figsize at a printed width.
+
+    Scales a figure designed as ``old_w`` x ``old_h`` (any unit) to
+    ``width_in`` inches wide (e.g. SINGLE, ONEHALF or DOUBLE), keeping the
+    aspect ratio, with a height of at least ``min_h`` inches.  Returns
+    (width, height) in inches.
+    """
     h = old_h * (width_in / old_w)
     return (width_in, max(h, min_h))
 
@@ -97,8 +121,8 @@ def _texts(fig):
         for t in list(ax.texts) + [ax.title, ax.xaxis.label, ax.yaxis.label]:
             out.append((t, ax))
         # Only ticks inside the view limits are actually drawn; matplotlib keeps
-        # label artists for out-of-range ticks, and counting them produced false
-        # "off-canvas" reports.
+        # label artists for out-of-range ticks, and counting them would produce
+        # false "off-canvas" reports.
         if not getattr(ax, "axison", True):
             continue          # axis("off"): tick labels exist but are not drawn
         for locs, labels, lim in ((ax.get_xticks(), ax.get_xticklabels(), ax.get_xlim()),
@@ -126,6 +150,7 @@ def _texts(fig):
 
 
 def _extent(t, renderer):
+    """Display-space bounding box of a text artist, or None if empty or unmeasurable."""
     try:
         bb = t.get_window_extent(renderer=renderer)
         if bb.width <= 0 or bb.height <= 0:
@@ -136,6 +161,7 @@ def _extent(t, renderer):
 
 
 def _overlap_frac(a, b):
+    """Intersection area of two boxes as a fraction of the smaller box (0 to 1)."""
     dx = min(a.x1, b.x1) - max(a.x0, b.x0)
     dy = min(a.y1, b.y1) - max(a.y0, b.y0)
     if dx <= 0 or dy <= 0:
@@ -148,7 +174,11 @@ def _text_over_artwork(fig, name, items):
     """How much of each label's box is drawn over something else.
 
     Re-renders the figure with all text hidden and measures the ink underneath
-    each label. Returns a list of problem strings.
+    each label. ``items`` holds (text, axes, string, display bbox) tuples from
+    audit(). A label is reported when more than INK_FRAC of its box differs
+    from the background by more than INK_TOL and the area behind it is not a
+    single flat colour (UNIFORM_FRAC). Labels with their own bbox patch are
+    skipped. Returns a list of problem strings.
     """
     try:
         import numpy as np
@@ -206,6 +236,7 @@ def _text_over_artwork(fig, name, items):
             # inset by a few per cent so an adjacent spine at the very edge of
             # the text box is not mistaken for artwork underneath it
             dx, dy = 0.06 * bb.width, 0.06 * bb.height
+            # display coordinates have y up; the pixel buffer has row 0 at the top
             x0 = int(max(0, round(bb.x0 + dx)))
             x1 = int(min(width, round(bb.x1 - dx)))
             y0 = int(max(0, round(height - bb.y1 + dy)))
@@ -242,6 +273,11 @@ def _text_over_artwork(fig, name, items):
 
 def audit(fig, name="figure", verbose=True, tight=False):
     """Report text collisions, off-canvas text and undersized lettering.
+
+    Runs all the checks listed in the module docstring on ``fig`` at its
+    current dpi. ``name`` labels the messages; ``verbose`` prints them to
+    stderr; ``tight`` skips the off-canvas check, because a tight bounding
+    box would enlarge the canvas to include such text.
 
     Returns a list of human-readable problem strings (empty means clean).
     """
@@ -319,7 +355,7 @@ def audit(fig, name="figure", verbose=True, tight=False):
             problems.append(f"{name}: text overflows its box by {over:.0f} px: "
                             f"{s_[:40]!r}")
 
-    # 4. text-vs-text collisions
+    # 4. text-vs-text collisions (overlap above OVERLAP_FRAC of the smaller box)
     for i in range(len(items)):
         ti, axi, si, bi = items[i]
         for j in range(i + 1, len(items)):
@@ -334,7 +370,7 @@ def audit(fig, name="figure", verbose=True, tight=False):
                 problems.append(f"{name}: text overlap {100*f:.0f}%: "
                                 f"{si[:30]!r} vs {sj[:30]!r}")
 
-    # 6. an axis label longer than its axis:
+    # 5. an axis label longer than its axis:
     #    the x label no wider than the axes, the y label (rotated) no taller; axes drawn without a frame (maps) and
     #    colour bars are skipped, colour-bar labels being measured against the bar instead
     for ax in fig.axes:
@@ -352,7 +388,7 @@ def audit(fig, name="figure", verbose=True, tight=False):
             if size > 1.02 * room:
                 problems.append(f"{name}: {along} label {100 * size / room:.0f}% of its axis: {lab.get_text()[:44]!r}")
 
-    # 7. a right-hand axis with tick labels but no axis line
+    # 6. a right-hand axis with tick labels but no axis line
     for ax in fig.axes:
         if not ax.get_visible() or not ax.axison:
             continue
@@ -361,7 +397,7 @@ def audit(fig, name="figure", verbose=True, tight=False):
         if right_labels and not ax.spines['right'].get_visible():
             problems.append(f"{name}: right-hand axis without an axis line: {ax.yaxis.label.get_text()[:44]!r}")
 
-    # 8. a legend that reaches outside its axes;
+    # 7. a legend that reaches outside its axes;
     #    legends placed outside on purpose (bbox_to_anchor outside 0-1) are skipped
     for ax in fig.axes:
         leg = ax.get_legend()
@@ -375,7 +411,7 @@ def audit(fig, name="figure", verbose=True, tight=False):
         if over > 1:
             problems.append(f"{name}: legend runs {over:.0f} px outside its axes: {[t.get_text() for t in leg.get_texts()][:2]}")
 
-    # 5. text printed over artwork -- inset labels, annotations and frameless
+    # 8. text printed over artwork -- inset labels, annotations and frameless
     #    legends sitting on lines, fills, colorbars or a neighbouring panel.
     problems += _text_over_artwork(fig, name, items)
 
@@ -395,15 +431,21 @@ _ORIG_SAVEFIG = getattr(Figure.savefig, "_epsl_original", Figure.savefig)
 
 
 def _savefig_audited(self, fname, *args, **kwargs):
+    """Replacement for Figure.savefig: audit the figure, then save it unchanged.
+
+    The audit runs at the dpi the file will be written at and never prevents
+    a save, except with EPSL_AUDIT=strict, where any reported problem raises
+    RuntimeError instead.
+    """
     mode = os.environ.get("EPSL_AUDIT", "1").lower()
     if mode not in ("0", "off", "false"):
         try:
             label = os.path.basename(str(fname))
         except Exception:
             label = "figure"
-        # Audit at the dpi this file will be written at. Measuring on the
-        # figure's default canvas (100 dpi) while saving at 260 let a clipped
-        # title through: glyph advances do not scale exactly with dpi.
+        # Audit at the dpi this file will be written at: glyph advances do not
+        # scale exactly with dpi, so measuring on the default canvas (100 dpi)
+        # while saving at a higher dpi can miss clipped text.
         save_dpi = kwargs.get("dpi", None)
         if save_dpi in (None, "figure"):
             save_dpi = self.dpi

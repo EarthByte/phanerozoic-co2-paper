@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """How much stronger the weathering feedback becomes if the climate's response to CO2 is the apparent Earth-system
-sensitivity of PhanDA (Judd et al. 2024, Science 385, eadk3705) rather than the HadCM3L model's own (2026-10-14).
+sensitivity of PhanDA (Judd et al. 2024, Science 385, eadk3705) rather than the HadCM3L model's own.
+
+Supplementary Information, "The weathering feedback at a larger climate sensitivity".
 
 WHY. The intrinsic strength of the weathering feedback in the paper, n = d ln F_sil / d ln CO2 (Extended Data Fig. 9b;
 run_reactivity.py and reactivity_post.py), comes from the pattern-scaling emulator fitted to the HadCM3L prior ensemble
@@ -24,9 +26,17 @@ run_reactivity.py and is checked against reactivity_fixed_co2.csv (relative diff
 the only difference between the columns is the scaling. Land-mean temperature and runoff per doubling are reported
 for each variant. AESS is set by --aess (default 7.7; the 1-sigma range 7.4-8.0 changes s by +-4%).
 
+INPUTS: the input cache (build_cache.py), the emulator (phanda_sensitivity.npz), the main-run amplitudes
+(kin_bridge_s2_amplitudes.txt) and reactivity_fixed_co2.csv (run_reactivity.py) for the regression check.
+
 OUTPUTS (one table and one summary, nothing else): data/nature_recast/aess_feedback_test.csv (per age: ECS, s,
 F_sil at 280/560/1120 ppm, n, land dT and dq per doubling, for model, T and TP) and aess_feedback_test_summary.md
-(Phanerozoic mean and range of n per variant; the sink change per doubling at 560 ppm).
+(Phanerozoic mean and range of n per variant; the sink change per doubling implied by n, 2^n - 1; land warming
+and runoff change per doubling).
+Columns: co2_ref (ppm), ecs_model (deg C per doubling), scale (s), F_sil_<C>_<variant> (Gt C/yr), n_<variant> (-),
+dT_land_per_doubling_<variant> (deg C, area-weighted land mean), dq_land_pct_per_doubling_<variant> (%).
+A full run appends each age to aess_feedback_test.partial.csv as it finishes; once all ages are present the
+complete table is written and the partial file is moved to data/nature_recast/_to_delete/.
 
     python3 aess_feedback_test.py 0 300            # pilot: two ages, including the regression check
     python3 aess_feedback_test.py                  # all 109 ages (resumable: re-run the same command), then the summary
@@ -38,6 +48,7 @@ import run_weathering as rw
 import _cache
 import _config as cfg
 
+# apparent Earth-system sensitivity, deg C per doubling (--aess); the remaining arguments are ages
 AESS = float(sys.argv[sys.argv.index('--aess') + 1]) if '--aess' in sys.argv else 7.7
 args = [a for i, a in enumerate(sys.argv[1:], 1) if not a.startswith('--') and sys.argv[i - 1] != '--aess']
 SENS = np.load(cfg.SENS)
@@ -47,12 +58,16 @@ AMPS = ast.literal_eval(open(OUT / 'kin_bridge_s2_amplitudes.txt').read().split(
 CO2 = [280.0, 560.0, 1120.0]
 fitsets = {r: wc.load_fits(rw.PARAMS, [r]) for r in rw.SETS}
 slat = SENS['lat'].astype(float); slon = SENS['lon'].astype(float); sage = [int(a) for a in SENS['age']]
+# emulator's area-weighted global warming per doubling at each age, deg C
 ECS = SENS['ecs_area_weighted'].astype(float)
+# the run_reactivity.py table, against which the unscaled variant is checked
 REF = {int(float(r['age'])): r for r in csv.DictReader(open(OUT / 'reactivity_fixed_co2.csv'))}
 VARIANTS = ('model', 'T', 'TP')
 
 
 def sink(E, q, T, A, m):
+    """Global silicate sink (Gt C/yr), three-set mean with the main-run amplitudes, over the land mask m.
+    E erosion rate (mm/yr), q runoff (mm/yr), T temperature (K), A cell area (m2)."""
     sil = 0.0
     for r in rw.SETS:
         t = rw.region_terms(E, q, T, fitsets[r], 'kinetic')
@@ -61,6 +76,8 @@ def sink(E, q, T, A, m):
 
 
 def one_age(age):
+    """All three variants at one age; returns the table row. Exits if the unscaled variant does not reproduce
+    reactivity_fixed_co2.csv to a relative 1e-6."""
     d = _cache.load(age); shp = tuple(d['shape']); idx = d['idx']
     lat = d['lat'].astype(float); lon = d['lon'].astype(float)
     ilat = np.abs(slat[:, None] - lat[None, :]).argmin(0)
@@ -72,10 +89,12 @@ def one_age(age):
     cref = float(SENS['co2_ref'][k]); s = AESS / ECS[k]
     A = d['area'].astype(float); T0 = d['T'].astype(float) + 273.15; P0 = d['rain'].astype(float) * 1000.0
     ratio = d['ratio'].astype(float)
+    # adjusted surface, erosion rate (mm/yr) at the main-model calibration factor
     m = d['mz']; E = np.where(m, np.maximum(-d['ero_z'].astype(float), 0.0), 0.0) * 2.0
     Am = A[m].sum()
     row = dict(age=age, co2_ref=cref, ecs_model=round(float(ECS[k]), 4), scale=round(float(s), 4))
     for v in VARIANTS:
+        # per-doubling temperature and precipitation slopes of the variant
         lam = lam0 * (s if v in ('T', 'TP') else 1.0)
         kap = kap0 * (s if v == 'TP' else 1.0)
         F = {}; Tl = {}; ql = {}
@@ -89,6 +108,7 @@ def one_age(age):
         for C in CO2:
             row[f'F_sil_{int(C)}_{v}'] = F[C]
         row[f'n_{v}'] = float(np.log(F[1120.0] / F[280.0]) / np.log(4.0))
+        # 280 -> 1120 ppm is two doublings: half the temperature change, square root of the runoff ratio
         row[f'dT_land_per_doubling_{v}'] = (Tl[1120.0] - Tl[280.0]) / 2.0
         row[f'dq_land_pct_per_doubling_{v}'] = 100.0 * ((ql[1120.0] / ql[280.0]) ** 0.5 - 1.0)
     ref = REF.get(age)
@@ -124,6 +144,7 @@ for age in ages:
 if args:
     print(f'pilot: {len(ages)} ages, regression check passed; nothing written (run without ages for the full table)')
     sys.exit(0)
+# full run complete: assemble the table and write the summary
 import pandas as pd
 t = pd.read_csv(part).drop_duplicates('age', keep='last').set_index('age').sort_index()
 if sorted(t.index.tolist()) != sorted(sage):
@@ -135,6 +156,7 @@ L = [f'# Weathering feedback with the climate response scaled to the PhanDA appa
      f'Emulator warming per doubling (ECS): {t.ecs_model.min():.2f}-{t.ecs_model.max():.2f} C (mean {t.ecs_model.mean():.2f}); scale factor {t.scale.min():.2f}-{t.scale.max():.2f}.', '',
      '| variant | n mean | n range | sink change per doubling, mean | land dT per doubling, mean | land runoff change per doubling, mean |',
      '|---|---|---|---|---|---|']
+# per variant: mean and range of n, and the sink change per doubling, 2^n - 1
 for v, name in (('model', 'HadCM3L emulator as fitted (Extended Data Fig. 9b)'), ('T', 'temperature scaled to the AESS'), ('TP', 'temperature and precipitation scaled')):
     n = t[f'n_{v}']; per = 100 * (2 ** n - 1)
     L.append(f'| {name} | {n.mean():.3f} | {n.min():.3f} to {n.max():.3f} | {per.mean():+.1f}% (max {per.max():+.1f}%) | '

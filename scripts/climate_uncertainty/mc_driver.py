@@ -1,35 +1,53 @@
 #!/usr/bin/env python3
 """
-mc_driver.py — propagate the PhanDA climate-forcing uncertainty end-to-end through
-the NeuroLEM surrogate and the Bufe weathering step, and put percentile bands on
-Figure 3 (continental sediment delivery) and Figure 7 (silicate sink vs pCO2).
+mc_driver.py — propagate the climate-forcing uncertainty end-to-end through the
+NeuroLEM surrogate and the Bufe et al. (2024) weathering law, and put percentile
+bands on the Phanerozoic time series of continental sediment delivery and of the
+silicate weathering sink.
+
+ROLE IN THE PAPER
+-----------------
+This script defines the two-parameter Monte Carlo design behind the climate-state
+uncertainty test (Methods, "Uncertainty and sensitivity", item 6: climate states
+from the pattern-scaling emulator over a grid of CO2 levels spanning the proxy
+envelope and draws of the climate-model spread).  The paper's climate-state tables
+are written by ``nature_recast/climate_sensitivity.py``, which follows the same
+design under the weathering formulation of the main model and imports
+``Surrogate``, ``_node_axes`` and ``_perturb_coarse`` from this module
+(``dyntopo_sensitivity.py`` and ``check_archive.py`` also use ``Surrogate``).  Run
+on its own, this script bands the sediment-flux and silicate-sink histories with the
+simpler weathering step defined below (median parameter set, one amplitude per
+reaction, runoff factor on the whole flux).
 
 WHY THIS IS CHEAP
 -----------------
 A naive Monte Carlo would need one surrogate forward pass per member per age per
-DEM: 2000 x 109 x 2 = 436,000 passes at 1801 x 3601.  It is not necessary.  The
-perturbation produced by ``phanda_emulator`` is a strictly TWO-PARAMETER family:
+palaeoelevation surface: 2000 x 109 x 2 = 436,000 passes at 1801 x 3601.  It is not
+necessary.  The perturbation produced by ``phanda_emulator`` is a strictly
+TWO-PARAMETER family:
 
-    dT(x)      = lambda_T(x) * r  +  z * sigma_T(x)
+    dT(x)            = lambda_T(x) * r  +  z * sigma_T(x)                [K]
     ln R(x)/R_ref(x) = epsilon * ( kappa_P(x) * r  +  z * sigma_lnP(x) )
 
-    r = log2(pCO2 / pCO2_ref)            the CO2 draw
+    r = log2(pCO2 / pCO2_ref)            the CO2 draw, in doublings
     z = the (spatially coherent) standard-normal draw on the sigma field
 
-Everything downstream — the surrogate erosion field, its area integral, the Bufe
-fluxes — is a smooth function of (r, z) alone.  So we evaluate the *expensive*
-chain on a small (r, z) node grid per age, and then obtain any number of Monte
-Carlo members by interpolating the integrated scalars.  With 5 x 3 nodes that is
-5 x 3 x 109 x 2 = 3270 passes, and the member count becomes free.
+lambda_T (K per doubling), kappa_P (ln precipitation per doubling) and the sigma
+fields come from the emulator fit on the native HadCM3L grid (96 x 73) and are
+regridded bilinearly to the 0.1-degree grid.  Everything downstream — the surrogate
+erosion field, its area integral, the weathering fluxes — is a smooth function of
+(r, z) alone.  So the *expensive* chain is evaluated on a small (r, z) node grid per
+age, and any number of Monte Carlo members is obtained by interpolating the
+integrated scalars.  With 5 x 3 nodes that is 5 x 3 x 109 x 2 = 3270 passes, and the
+member count becomes free.
 
-Interpolation error is controlled by the node count, not by the member count, and
-is reported: ``nodes`` prints the curvature of each series in (r, z), and
-``--validate-direct`` re-evaluates a random subset of members exactly and reports
-the discrepancy.
+Interpolation error is controlled by the node count, not by the member count:
+``nodes`` prints, for every age, the curvature of the sediment flux in r (its largest
+departure from a straight line through the end nodes, relative to its range).
 
 TWO-STAGE USE
 -------------
-  Stage A (GPU, minutes to hours)
+  Stage A (GPU, minutes to hours; resumable)
       python mc_driver.py nodes --erodep-dir ... --temp-dir ... \
           --sensitivity phanda_sensitivity.npz --ckpt best.pt \
           --params-json bufe_2024_params.json --envelope csv \
@@ -39,39 +57,94 @@ TWO-STAGE USE
       python mc_driver.py sample --nodes mc_nodes.npz --n 2000 --seed 0 \
           --out mc_bands --data-dir ../../data
 
+  Self-test (no data needed)
+      python mc_driver.py selftest
+
+INPUTS (stage A)
+----------------
+  --erodep-dir    erodep_<age>Ma.npz from apply_dem.py, 0.1-degree grid (1801 x 3601,
+                  lat -90..90, lon -180..180): zpaleo_scotese / zpaleo_zhou (m; the
+                  PALEOMAP reference and the rock-chemistry-adjusted surface),
+                  ero_scotese / ero_zhou (signed erosion(-)/deposition(+) rate, mm/yr),
+                  mask_scotese / mask_zhou (land masks), rain (HadCM3 precipitation,
+                  m/yr), lat.
+  --temp-dir      <age>Ma.npz with int-packed HadCM3 surface-air temperature
+                  (temp_q * scale + offset, degC) on the same grid.
+  --sensitivity   phanda_sensitivity.npz written by ``phanda_emulator.py fit``.
+  --ckpt          trained NeuroLEM checkpoint (best.pt).
+  --params-json   Bufe et al. (2024) regional parameter fits.
+  --envelope ...  pCO2 envelope per age (``csv`` from build_pco2_envelope.py,
+                  ``factor`` = CO2_ref / f ... CO2_ref * f, or ``records``).
+
+OUTPUTS
+-------
+  nodes  -> mc_nodes.npz, with leading axes (age, r node, z node[, case]):
+            Q      (nA, nr, nz, 3)  net continental export, -sum(erodep * area) over
+                                    the land mask, in mm m^2/yr (calibrated to Gt/yr
+                                    in stage B, so only its shape matters)
+            scf    (nA, nr, nz, 3)  silicate-cation CO2 sink, Gt C/yr
+            sf     (nA, nr, nz, 3)  sulfide-sulfate CO2 source, Gt C/yr
+            T_land (nA, nr, nz)     mean land temperature, degC (reference land mask)
+            q_land (nA, nr, nz)     mean land precipitation, m/yr (reference land mask)
+            co2    (nA, nr)         pCO2 at each r node, ppm
+            r, z   (nA, nr), (nA, nz)  node coordinates
+            plus age, the run settings and reference_node_rmse.
+            The three cases are ``reference`` (PALEOMAP surface and land mask),
+            ``informed`` (adjusted surface and its own land mask) and
+            ``informed_common_cells`` (adjusted surface on the PALEOMAP land mask).
+            One checkpoint per age is kept in <out>.ckpt/ so the sweep resumes.
+  sample -> <out>/mc_bands.csv        percentiles per age of sediment (Gt/yr),
+                                      silicate and net (silicate - sulfide) flux
+                                      (Gt C/yr) for the three cases, and of the
+                                      informed - reference differences
+            <out>/mc_band_widths.csv  median relative band width under both
+                                      calibrations
+            <out>/mc_correlations.csv per-member Pearson r of the silicate sink
+                                      against log10 pCO2 of Foster et al. (2017) and
+                                      Judd et al. (2024), its change between the
+                                      surfaces and P(delta r <= 0)
+            <out>/fig3_sediment_flux_banded.png, <out>/fig7_pco2_banded.png
+                                      quick-look plots of the banded series
+
 REFERENCE-NODE CHECK
 --------------------
 The (r = 0, z = 0) node is by construction the unperturbed forcing, so the
 surrogate output there must reproduce the stored ``ero_scotese`` / ``ero_zhou``
-fields in the erodep NPZs.  ``nodes`` asserts this at every age and prints the
-RMSE; a non-trivial value means the checkpoint, normalisation or input fields do
-not match the ones that produced the archive, and the run should be stopped.
+fields in the erodep NPZs.  ``nodes`` checks this at every age, prints the RMSE (in
+the units of the erosion fields, mm/yr) and aborts if it exceeds
+``--reference-tolerance``; a failure means the checkpoint, normalisation or input
+fields do not match the ones that produced the archive.
 
 CALIBRATION
 -----------
-The paper fixes two amplitudes on modern observations: the sediment calibration
-(present-day Scotese-Wright export = 20 Gt/yr) and the Bufe amplitude factors
-(present-day silicate sink ~0.10 Gt C/yr, sulfide source ~0.02 Gt C/yr).  Those
-are observational anchors that hold whatever the climate member is, so
-``--calibration per-member`` (the default) re-derives them inside each member.
-This removes the part of the climate uncertainty that simply rescales both
-histories together, and leaves the part that changes their shape and their
-difference — which is what the paper's claim rests on.  ``--calibration fixed``
-keeps the reference amplitudes and shows the raw sensitivity instead; both are
-written, because the gap between them *is* the amplitude-versus-shape statement.
+Two amplitudes are fixed on modern observations: the sediment calibration
+(present-day net export from the PALEOMAP surface = ``--present-day-flux-gt``,
+20 Gt/yr) and the present-day silicate and sulfide fluxes, whose level is set by the
+amplitude factors ``--f-sil`` and ``--f-sulf``.  Those are observational anchors that
+hold whatever the climate member is, so ``--calibration per-member`` (the default)
+re-derives them inside each member: every member's present-day sediment flux is
+scaled to the target, and its present-day silicate and sulfide fluxes to those of the
+unperturbed reference member.  This removes the part of the climate uncertainty that
+simply rescales both histories together, and leaves the part that changes their
+shape and their difference, which is what the paper's claim rests on.
+``--calibration fixed`` keeps the reference amplitudes and shows the raw sensitivity
+instead; both are written to mc_band_widths.csv, because the gap between them is the
+amplitude-versus-shape statement.
 
 TIME CORRELATION
 ----------------
 How the draws are correlated across ages changes the band a lot, and the two
-parameters deserve different treatment:
+parameters are treated differently by default:
 
   * the CO2 draw ``r`` is proxy uncertainty, largely independent between distant
-    stages -> ``--co2-time-correlation independent`` (default)
+    stages -> ``--co2-time-correlation independent`` (default): r is drawn
+    uniformly (in log2 pCO2) across the node range at each age
   * the ``z`` draw stands for model structural error, which is a coherent bias of
     one model configuration across the whole Phanerozoic ->
-    ``--sigma-time-correlation full`` (default)
+    ``--sigma-time-correlation full`` (default): one z per member, used at all ages
 
-Both can be flipped; the choice must be stated in the methods.
+Both can be changed; the setting used is printed and should be reported with the
+results.
 """
 from __future__ import annotations
 
@@ -90,19 +163,24 @@ sys.path.insert(0, str(HERE))
 from phanda_emulator import (ClimateEmulator, basegrid_axes, load_envelope,  # noqa: E402
                              regrid_bilinear, _clip_scale)
 
-R_EARTH = 6.371e6
-DEG = np.deg2rad(0.1)
-LANDPLANT_MA = 420.0
+R_EARTH = 6.371e6           # m, mean Earth radius
+DEG = np.deg2rad(0.1)       # grid spacing of the 0.1-degree basegrid, rad
+LANDPLANT_MA = 420.0        # ages before widespread land plants, shaded in the sediment plot
 
-# Bufe constants, kept identical to bufe_co2_from_dem.py
-R_GAS = 8.3145
-T_REF_K = 293.15
-RHO = 2500.0
-M_SO4 = 96.06
-M_CAT = 30.0
+# Bufe et al. (2024) weathering constants, kept identical to bufe_co2_from_dem.py
+R_GAS = 8.3145              # J mol-1 K-1
+T_REF_K = 293.15            # K, reference temperature of the Arrhenius term
+RHO = 2500.0                # kg m-3; E [mm/yr] * RHO = denudation in t km-2 yr-1
+M_SO4 = 96.06               # g mol-1, sulfate
+M_CAT = 30.0                # g mol-1, M_cat of the net-flux formula of Bufe et al. (2024)
+# Runoff exponent beta: the flux scales as (q / q_ref)**(beta + 1)
 BETA = {"silicate": 0.0, "sulfide": -0.75}
 DEFAULT_REGIONS = ["Taiwan", "Sichuan", "NewZealand"]
 
+# The three integration cases, in the order of the last axis of Q, scf and sf:
+#   reference              PALEOMAP surface, PALEOMAP land mask
+#   informed               rock-chemistry-adjusted surface, its own land mask
+#   informed_common_cells  adjusted surface integrated over the PALEOMAP land mask
 CASES = ("reference", "informed", "informed_common_cells")
 
 
@@ -111,16 +189,33 @@ CASES = ("reference", "informed", "informed_common_cells")
 # --------------------------------------------------------------------------------------
 
 def median_fit(raw, rxn, regions):
+    """Median over ``regions`` of each Bufe et al. (2024) fit parameter of ``rxn``.
+
+    ``raw`` is the parsed parameter JSON ({reaction: {region: {param: value}}}).
+    Returns {param: value} with chi_m (-), K_over_sigp1, sigma_plus_1 (-),
+    z_t_per_km2 (t km-2 yr-1), Ea_J_per_mol (J/mol) and q_ref_mm_yr (mm/yr).
+    """
     ks = ["chi_m", "K_over_sigp1", "sigma_plus_1", "z_t_per_km2", "Ea_J_per_mol", "q_ref_mm_yr"]
     fs = [raw[rxn][r] for r in regions if r in raw[rxn]]
     return {k: float(np.median([f[k] for f in fs])) for k in ks}
 
 
 def weathering_flux(E_mm, q_mm, T_K, f, beta):
+    """Weathering flux W = chi * E * (1 - exp(-a)) * (q / q_ref)**(beta + 1).
+
+    a = K/(sigma+1) * f(T) * (z / E)**(sigma+1), with f(T) an Arrhenius factor about
+    T_REF_K.  The runoff factor multiplies the whole flux.
+
+    E_mm : denudation rate, mm/yr (positive); q_mm : runoff, mm/yr; T_K : K.
+    f    : parameter dict from ``median_fit``; beta : runoff exponent.
+    Returns W in t km-2 yr-1 (numerically equal to g m-2 yr-1), same shape as E_mm.
+    """
+    # floors keep the power laws finite on non-eroding and dry cells
     E = np.maximum(E_mm, 1e-6) * RHO
     q = np.maximum(q_mm, 1e-3)
     fT = 1.0 if f["Ea_J_per_mol"] == 0 else np.exp(
         f["Ea_J_per_mol"] / R_GAS * (1.0 / T_REF_K - 1.0 / T_K))
+    # clipping at 700 avoids underflow in exp(-arg); beyond it the flux is supply-limited
     arg = np.clip(f["K_over_sigp1"] * fT * np.power(f["z_t_per_km2"] / E, f["sigma_plus_1"]),
                   0.0, 700.0)
     W = f["chi_m"] * E * (1.0 - np.exp(-arg))
@@ -128,17 +223,28 @@ def weathering_flux(E_mm, q_mm, T_K, f, beta):
 
 
 def bufe_case(ero_mm, mask, q_mm, T_K, area, fits, f_sil, f_sulf):
-    """Returns (scf, sf) in Gt C /yr with the 0.5/M factors folded in.
+    """Global silicate CO2 sink and sulfide CO2 source of one surface, Gt C/yr.
 
-    Evaluated on the masked cells only.  The full-grid form (np.where over
-    1801 x 3601) is the dominant cost of the whole node sweep -- it runs 3 times
-    per node, 15 nodes per age, 109 ages -- and land is roughly a quarter of the
-    grid, so indexing first cuts the sweep several-fold.  Numerically identical:
-    the masked-out cells contributed exactly zero to both sums.
+    ero_mm : signed erosion(-)/deposition(+) rate, already multiplied by the erosion
+             scaling factor, mm/yr (H, W); depositing cells carry no flux.
+    mask   : land mask (H, W); only these cells are integrated.
+    q_mm   : runoff, mm/yr; T_K : temperature, K; area : cell area, m2 (all H, W).
+    fits   : {"silicate": params, "sulfide": params} from ``median_fit``.
+    f_sil, f_sulf : amplitude factors applied to the silicate and sulfide fluxes.
+
+    Returns (scf, sf), the two terms of F_net = 0.5 SCF / M_cat - SF / M_SO4
+    (Bufe et al., 2024): W [g m-2 yr-1] * area [m2] / M [g/mol] gives mol/yr, times
+    0.5, times 12.011 g C/mol and 1e-15 Gt/g.
+
+    The calculation indexes the masked cells first rather than evaluating the full
+    1801 x 3601 grid: it runs 3 times per node, 15 nodes per age and 109 ages, and
+    land is roughly a quarter of the grid, so this cuts the cost several-fold while
+    giving the same sums.
     """
     m = np.asarray(mask, bool)
     if not m.any():
         return 0.0, 0.0
+    # erosion positive; deposition (positive erodep) gives E = 0
     E = np.maximum(-np.asarray(ero_mm, dtype=np.float64)[m], 0.0)
     qc = np.asarray(q_mm, dtype=np.float64)[m]
     Tc = np.asarray(T_K, dtype=np.float64)[m]
@@ -146,7 +252,7 @@ def bufe_case(ero_mm, mask, q_mm, T_K, area, fits, f_sil, f_sulf):
     SCF = f_sil * weathering_flux(E, qc, Tc, fits["silicate"], BETA["silicate"])
     SF = f_sulf * weathering_flux(E, qc, Tc, fits["sulfide"], BETA["sulfide"])
     scf = float(np.nansum(SCF * A)) / M_CAT * 0.5 * 12.011 * 1e-15
-    sf = float(np.nansum(SF * A)) / M_SO4 * 0.5 * 12.011 * 1e-15
+    sf = float(np.nansum(SF * A)) / M_SO4 * 12.011 * 1e-15
     return scf, sf
 
 
@@ -155,7 +261,14 @@ def bufe_case(ero_mm, mask, q_mm, T_K, area, fits, f_sil, f_sulf):
 # --------------------------------------------------------------------------------------
 
 class Surrogate:
-    """Thin wrapper on the trained NeuroLEM UNet, matching apply_dem.py exactly."""
+    """Thin wrapper on the trained NeuroLEM U-Net, matching apply_dem.py exactly.
+
+    Calling it with elevation (m) and precipitation (m/yr), both (H, W) on the
+    0.1-degree grid, returns the signed erosion(-)/deposition(+) rate in mm/yr.
+    Inputs are standardised with the training means and standard deviations stored
+    in the checkpoint; the network predicts the target in a standardised asinh space,
+    which is inverted here as s * sinh(t * t_std + t_mean).
+    """
 
     def __init__(self, ckpt: str, device: str | None = None):
         import torch
@@ -172,6 +285,7 @@ class Surrogate:
         self.s = float(n["asinh_s"])
         self.t_mean = float(n["t_mean"])
         self.t_std = float(n["t_std"])
+        # each U-Net level halves the grid, so H and W must be multiples of 2**depth
         self.mult = 2 ** ck["depth"]
         self.val_rmse = ck.get("val_rmse")
 
@@ -195,6 +309,7 @@ class StubSurrogate:
     val_rmse = None
 
     def __call__(self, elev, rain):
+        # erosion (negative) grows with gradient magnitude and with rain**0.6
         slope = np.gradient(elev.astype(np.float32), axis=0) ** 2 + \
                 np.gradient(elev.astype(np.float32), axis=1) ** 2
         e = -1e-6 * np.sqrt(slope) * np.power(np.maximum(rain, 1e-3), 0.6)
@@ -202,6 +317,11 @@ class StubSurrogate:
 
 
 def _load_model_class():
+    """Import the GlobalUNet class from salles_unet.py (NeuroLEM surrogate code).
+
+    Uses the module if it is importable, otherwise looks in a sibling
+    neurolem-surrogate checkout, the parent directory and this directory.
+    """
     try:
         from salles_unet import GlobalUNet
         return GlobalUNet
@@ -216,6 +336,7 @@ def _load_model_class():
 
 
 def _device():
+    """Pick the torch device: CUDA, then Apple MPS, then CPU."""
     import torch
     if torch.cuda.is_available():
         return "cuda"
@@ -226,6 +347,10 @@ def _device():
 
 
 def _pad_to(a, mult):
+    """Edge-pad the last two axes of ``a`` up to multiples of ``mult``.
+
+    Returns the padded array and the original (H, W) so the output can be cropped.
+    """
     H, W = a.shape[-2:]
     ph, pw = (-H) % mult, (-W) % mult
     if ph == 0 and pw == 0:
@@ -238,7 +363,14 @@ def _pad_to(a, mult):
 # --------------------------------------------------------------------------------------
 
 def _node_axes(emu, age, c_lo, c_hi, n_r, n_z, z_max):
-    """(r nodes incl. 0, z nodes incl. 0).  r spans the pCO2 envelope in log space."""
+    """Node coordinates of the (r, z) grid for one age.
+
+    r runs from log2(c_lo / CO2_ref) to log2(c_hi / CO2_ref) (doublings), z from
+    -z_max to +z_max (standard deviations).  Both axes have 0 added (the unperturbed
+    reference forcing) and are sorted and de-duplicated, so with the default
+    n_r = 5, n_z = 3 there are 4 + 1 r nodes and 2 + 1 z nodes.
+    Returns (r, z) as 1-D float arrays.
+    """
     ref = emu.co2_ref(age)
     r_edges = np.log2(np.array([c_lo, c_hi], dtype=float) / ref)
     r = np.linspace(r_edges[0], r_edges[1], max(n_r - 1, 2))
@@ -248,11 +380,17 @@ def _node_axes(emu, age, c_lo, c_hi, n_r, n_z, z_max):
 
 
 def cmd_nodes(a):
+    """Stage A: evaluate surrogate and weathering on the (r, z) node grid of every age.
+
+    Writes ``a.out`` (see the module docstring for its arrays) and one checkpoint per
+    age; aborts if the unperturbed node does not reproduce the archived erosion fields.
+    """
     emu = ClimateEmulator.load(a.sensitivity)
     ed, td = Path(a.erodep_dir), Path(a.temp_dir)
     files = {int(re.search(r"erodep_(\d+)Ma", f.name).group(1)): f
              for f in ed.glob("erodep_*Ma.npz")}
     ages = sorted(int(v) for v in a.ages) if a.ages else sorted(set(files) & set(emu.age.tolist()))
+    # stage B calibrates on the present day, so 0 Ma must be among the ages
     if 0 not in ages:
         print("WARNING: 0 Ma is absent, so per-member recalibration will not be possible",
               file=sys.stderr)
@@ -268,14 +406,13 @@ def cmd_nodes(a):
           f"val_rmse={model.val_rmse}  ages={len(ages)}  "
           f"sigma_terms={','.join(terms) or 'none'}  epsilon={a.runoff_elasticity}")
 
-    blat, blon = basegrid_axes()
+    blat, blon = basegrid_axes()        # 0.1-degree target grid of the perturbations
     out = {k: [] for k in ("Q", "scf", "sf", "T_land", "q_land", "co2", "r", "z")}
     ref_rmse = []
     ages_done = []
-    # Per-age checkpoints, for the same reason the fit has them: this is a
-    # multi-hour GPU job and losing it at 90 minutes to a dropped session is not
-    # acceptable.  Each age is written the moment it completes and reloaded on the
-    # next run; --time-budget stops cleanly so the sweep can be chunked.
+    # Per-age checkpoints: this is a multi-hour GPU job, so each age is written the
+    # moment it completes and reloaded on the next run; --time-budget stops cleanly
+    # so the sweep can be split into chunks.
     ckpt = Path(a.checkpoint_dir) if a.checkpoint_dir else Path(str(a.out) + ".ckpt")
     ckpt.mkdir(parents=True, exist_ok=True)
     t_start = time.monotonic()
@@ -298,18 +435,23 @@ def cmd_nodes(a):
                   flush=True)
             break
         d = np.load(files[age], allow_pickle=True)
+        # all fields below are (1801, 3601), lat -90..90 by lon -180..180
         lat = d["lat"].astype(np.float64)
-        rain_ref = d["rain"].astype(np.float32)
+        rain_ref = d["rain"].astype(np.float32)          # HadCM3 precipitation, m/yr
         zp = {"reference": d["zpaleo_scotese"].astype(np.float32),
               "informed": d["zpaleo_zhou"].astype(np.float32)}
         masks = {"reference": d["mask_scotese"], "informed": d["mask_zhou"],
                  "informed_common_cells": d["mask_scotese"]}
+        # spherical cell area, m2: R^2 * dlat * dlon * cos(lat)
         area = np.broadcast_to((R_EARTH * R_EARTH * DEG * DEG)
                                * np.cos(np.deg2rad(lat))[:, None], rain_ref.shape)
         tz = np.load(td / f"{age}Ma.npz", allow_pickle=True)
+        # unpack the integer-quantised temperature, degC
         T_ref_C = tz["temp_q"].astype(np.float32) * float(tz["scale"]) + float(tz["offset"])
 
         c_lo, c_hi = float(lo[ages.index(age)]), float(hi[ages.index(age)])
+        # pCO2 envelope (ppm) for this age; the factor envelope is centred on the
+        # model's own CO2 so that r = 0 is the reference simulation
         if a.envelope == "factor":
             ref = emu.co2_ref(age)
             c_lo, c_hi = ref / a.envelope_factor, ref * a.envelope_factor
@@ -318,21 +460,29 @@ def cmd_nodes(a):
             continue
         r_nodes, z_nodes = _node_axes(emu, age, c_lo, c_hi, a.n_r, a.n_z, a.z_max)
 
+        # per-node integrals: (n_r, n_z, case) for Q, SCF, SF and (n_r, n_z) for TL, QL
         Q = np.zeros((r_nodes.size, z_nodes.size, 3))
         SCF = np.zeros_like(Q)
         SF = np.zeros_like(Q)
         TL = np.zeros((r_nodes.size, z_nodes.size))
         QL = np.zeros_like(TL)
+        # indices of the unperturbed node (r = 0, z = 0)
         i0, j0 = int(np.argmin(np.abs(r_nodes))), int(np.argmin(np.abs(z_nodes)))
         for i, r in enumerate(r_nodes):
             for j, z in enumerate(z_nodes):
+                # temperature increment (K) and precipitation scale factor (-) on the
+                # HadCM3L grid, regridded to 0.1 degree
                 dT_c, rs_c = _perturb_coarse(emu, age, r, z, terms, a.runoff_elasticity, clip)
                 dT = regrid_bilinear(dT_c, emu.lat, emu.lon, blat, blon)
                 rs = regrid_bilinear(rs_c, emu.lat, emu.lon, blat, blon)
                 rain = (rain_ref * rs).astype(np.float32)
                 T_K = (T_ref_C + dT).astype(np.float64) + 273.15
+                # runoff for the weathering law: precipitation (m/yr -> mm/yr) times a
+                # uniform runoff coefficient
                 q_mm = rain.astype(np.float64) * 1000.0 * a.runoff_coefficient
 
+                # one surrogate pass per surface with the perturbed precipitation; the
+                # common-cells case reuses the adjusted-surface field on another mask
                 ero = {c: model(zp["reference" if c == "reference" else "informed"], rain)
                        for c in ("reference", "informed")}
                 ero["informed_common_cells"] = ero["informed"]
@@ -342,10 +492,15 @@ def cmd_nodes(a):
                     ref_rmse.append((age, *e))
                 for k, case in enumerate(CASES):
                     m = masks[case]
+                    # net export (erosion minus deposition) over the mask, mm m2/yr;
+                    # positive when the surface loses material
                     Q[i, j, k] = -float((ero[case].astype(np.float64) * area)[m].sum())
+                    # erosion rates scaled by --erate-scale (the sediment-calibrated
+                    # factor of the main model) before entering the weathering law
                     SCF[i, j, k], SF[i, j, k] = bufe_case(
                         ero[case].astype(np.float64) * a.erate_scale, m, q_mm, T_K,
                         area, fits, a.f_sil, a.f_sulf)
+                # climate diagnostics, plain means over the PALEOMAP land cells
                 land = masks["reference"]
                 TL[i, j] = float((T_ref_C + dT)[land].mean())
                 QL[i, j] = float(rain[land].mean())
@@ -354,12 +509,15 @@ def cmd_nodes(a):
         out["co2"].append(emu.co2_ref(age) * 2.0 ** r_nodes)
         out["r"].append(r_nodes); out["z"].append(z_nodes)
         ages_done.append(age); n_new += 1
+        # write to a temporary file and rename, so an interrupted write cannot leave
+        # a truncated checkpoint
         tmp = cp.with_suffix(".tmp.npz")
         np.savez_compressed(tmp, Q=Q, scf=SCF, sf=SF, T_land=TL, q_land=QL,
                             co2=out["co2"][-1], r=r_nodes, z=z_nodes,
                             ref_rmse=np.array(ref_rmse[-1][1:] if ref_rmse and
                                               ref_rmse[-1][0] == age else [np.nan, np.nan]))
         tmp.replace(cp)
+        # non-linearity of the reference sediment flux in r at z = 0
         curv = _curvature(Q[:, j0, 0], r_nodes)
         print(f"  [{age:>4} Ma] CO2 {c_lo:6.0f}-{c_hi:6.0f} ppm  "
               f"Q_ref {Q[i0, j0, 0]:.3e} m3/yr  "
@@ -410,6 +568,13 @@ def cmd_nodes(a):
 
 
 def _perturb_coarse(emu, age, r, z, terms, eps, clip):
+    """Climate perturbation of one (r, z) node on the native HadCM3L grid (73 x 96).
+
+    dT = lambda_T * r + z * sigma_T (K) and runoff scale = exp(eps * (kappa_P * r +
+    z * sigma_lnP)), clipped to ``clip``.  ``terms`` selects the sigma components
+    (int, fit, struct) added in quadrature; ``eps`` is the runoff elasticity.
+    Returns (dT, runoff_scale) as float32 arrays.
+    """
     i = emu._i(age)
     sT, sP = emu.sigma_total(age, terms)
     dT = emu.d["lambda_T"][i] * r + z * sT
@@ -431,7 +596,11 @@ def _curvature(y, x):
 # --------------------------------------------------------------------------------------
 
 def _interp2(node, r_nodes, z_nodes, r, z):
-    """Bilinear interpolation of node[(nr, nz, ...)] at scalar (r, z), clamped."""
+    """Bilinear interpolation of node[(nr, nz, ...)] at scalar (r, z), clamped.
+
+    Values outside the node range are clamped to its edge.  Returns node[0, 0]'s
+    trailing shape (here the three cases).
+    """
     r = np.clip(r, r_nodes[0], r_nodes[-1])
     z = np.clip(z, z_nodes[0], z_nodes[-1])
     i = np.clip(np.searchsorted(r_nodes, r) - 1, 0, r_nodes.size - 2)
@@ -443,6 +612,10 @@ def _interp2(node, r_nodes, z_nodes, r, z):
 
 
 def cmd_sample(a):
+    """Stage B: draw members, interpolate the node scalars, calibrate and write bands.
+
+    Arrays below are (n members, nA ages[, 3 cases]).
+    """
     z = np.load(a.nodes, allow_pickle=False)
     if bool(z["stub"]) and not a.allow_stub:
         raise SystemExit("these nodes were produced with --stub-surrogate and are a "
@@ -460,11 +633,16 @@ def cmd_sample(a):
     for k in range(nA):
         rn = z["r"][k]
         if a.co2_time_correlation == "full":
-            # same quantile of the envelope at every age -- a coherent pCO2 offset
+            # same quantile of the envelope at every age -- a coherent pCO2 offset.
+            # The tanh map takes one standard normal per member into (0, 1); the
+            # resulting position is peaked towards the middle of the range, not uniform
             R[:, k] = rn[0] + (0.5 * (1 + np.tanh(u / 1.5))) * (rn[-1] - rn[0])
         else:
+            # independent between ages: uniform in log2(pCO2) over the node range
             R[:, k] = rng.uniform(rn[0], rn[-1], n)
         zn = z["z"][k]
+        # standard normal, truncated to the z node range (+-z_max) so no member
+        # extrapolates beyond the evaluated nodes
         Z[:, k] = np.clip(zs if zs is not None else rng.standard_normal(n), zn[0], zn[-1])
 
     # ---- interpolate the integrated scalars --------------------------------------
@@ -494,7 +672,17 @@ def cmd_sample(a):
 
 
 def _calibrate(Q, SCF, SF, ages, mode, target_gt, z):
-    """Apply the modern anchors.  Returns dict of (n, nA, 3) calibrated series."""
+    """Apply the modern anchors.
+
+    Q, SCF, SF : (n, nA, 3) uncalibrated member series (Q in mm m2/yr; SCF and SF in
+    Gt C/yr).  ``target_gt`` is the present-day sediment flux, Gt/yr; ``z`` the node
+    file (None in the self-test, where the member means stand in for the reference).
+    All anchors are taken on the reference case (index 0) at the youngest age.
+
+    Returns a dict of (n, nA, 3) calibrated series -- sediment (Gt/yr), silicate,
+    sulfide and net = silicate - sulfide (Gt C/yr) -- and the per-member factors
+    k, a_sil and a_sulf.
+    """
     i0 = int(np.argmin(np.abs(ages)))
     # the unperturbed reference member: the (r=0, z=0) node at the present day
     if z is not None:
@@ -506,8 +694,10 @@ def _calibrate(Q, SCF, SF, ages, mode, target_gt, z):
     if mode == "per-member":
         # the modern anchors are observations and hold in every member, so re-derive
         # them inside each one; this removes the pure-amplitude part of the spread
+        # k converts mm m2/yr of net export to Gt/yr of sediment
         k = target_gt / Q[:, i0, 0]                                  # (n,)
         a_sil = SCF0 / SCF[:, i0, 0]
+        # the guard keeps a member with zero sulfide flux at factor 1
         a_sulf = np.where(SF[:, i0, 0] > 0, SF0 / SF[:, i0, 0], 1.0)
     else:
         # one calibration, taken from the unperturbed reference member and reused
@@ -522,16 +712,27 @@ def _calibrate(Q, SCF, SF, ages, mode, target_gt, z):
 
 
 def _pct(x, pcs, axis=0):
+    """Percentiles ``pcs`` of ``x`` across members (axis 0)."""
     return np.percentile(x, pcs, axis=axis)
 
 
 def _write_bands(outd, ages, results, chosen, pcs, a):
+    """Write mc_bands.csv and mc_band_widths.csv and print the band widths.
+
+    mc_bands.csv: one row per age; for sediment (Gt/yr), silicate and net (Gt C/yr)
+    and each case, the requested percentiles across members, then the percentiles of
+    the informed - reference differences of sediment and net flux.
+    mc_band_widths.csv: median over ages of (p_hi - p_lo) / |median| for both
+    calibrations, so the amplitude-versus-shape comparison sits in one table.
+    """
     rows = []
     for k, age in enumerate(ages):
         row = [int(age)]
         for key in ("sediment", "silicate", "net"):
             for c in range(3):
                 row += [f"{v:.6g}" for v in _pct(chosen[key][:, k, c], pcs)]
+        # differences are formed member by member before taking percentiles, so the
+        # common-mode climate signal cancels
         d = chosen["sediment"][:, k, 1] - chosen["sediment"][:, k, 0]
         row += [f"{v:.6g}" for v in _pct(d, pcs)]
         dn = chosen["net"][:, k, 1] - chosen["net"][:, k, 0]
@@ -556,6 +757,7 @@ def _write_bands(outd, ages, results, chosen, pcs, a):
                     x = res[key][:, :, c]
                     lo, hi = _pct(x, [pcs[0], pcs[-1]])
                     med = np.median(x, axis=0)
+                    # band width relative to the median, then the median over ages
                     rel = np.median(np.abs(hi - lo) / np.maximum(np.abs(med), 1e-12))
                     w.writerow([f"{key}_{name}", mode, f"{rel:.4f}"])
             for key in ("sediment", "net"):
@@ -578,7 +780,15 @@ def _write_bands(outd, ages, results, chosen, pcs, a):
 
 
 def _write_correlations(outd, ages, chosen, a, rng):
-    """Per-member Pearson r of the silicate sink against each pCO2 record, and dr."""
+    """Per-member Pearson r of the silicate sink against each pCO2 record, and dr.
+
+    Reads foster.npy and judd.npy from --data-dir: (n, 2) arrays of age (Ma) and pCO2
+    (ppm).  For each record and each interval 0 - amax Ma (--corr-intervals), the
+    record's log10 pCO2 is interpolated to the model ages and correlated with every
+    member's silicate sink on both surfaces; dr = r(adjusted) - r(reference).
+    Writes mc_correlations.csv with the median and 5th/95th percentiles of r and dr
+    and the fraction of members with dr <= 0.  ``rng`` is not used.
+    """
     dd = Path(a.data_dir) if a.data_dir else HERE
     recs = {}
     for nm in ("foster", "judd"):
@@ -592,12 +802,14 @@ def _write_correlations(outd, ages, chosen, a, rng):
     rows = []
     for nm, prod in recs.items():
         for amax in a.corr_intervals:
+            # ages within the interval and covered by the record; skip if too few
             m = (ages <= amax) & (ages <= prod[:, 0].max())
             if m.sum() < 5:
                 continue
             y = np.interp(ages[m], prod[:, 0], np.log10(prod[:, 1]))
             yc = y - y.mean()
             def rr(x):
+                # Pearson r of every member (rows of x) against y at once
                 xc = x - x.mean(axis=1, keepdims=True)
                 return (xc @ yc) / np.sqrt((xc ** 2).sum(1) * (yc ** 2).sum())
             r_ref = rr(chosen["silicate"][:, m, 0])
@@ -625,6 +837,13 @@ def _write_correlations(outd, ages, chosen, a, rng):
 
 
 def _figures(outd, ages, chosen, pcs, a):
+    """Quick-look plots of the banded sediment flux and silicate sink.
+
+    fig3_sediment_flux_banded.png: median and p_lo-p_hi band of the calibrated
+    sediment flux for both surfaces, with the present-day target marked.
+    fig7_pco2_banded.png: banded silicate sink of both surfaces beside each pCO2
+    record (log axis).  Skipped quietly if matplotlib is missing.
+    """
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -635,7 +854,7 @@ def _figures(outd, ages, chosen, pcs, a):
     BLUE, RED, PUR = "#1f4e79", "#c0392b", "#7d5ba6"
     lo, hi = pcs[0], pcs[-1]
 
-    # ---- Figure 3 with a band ----------------------------------------------------
+    # ---- sediment flux with a band -----------------------------------------------
     sed = chosen["sediment"]
     fig, ax = plt.subplots(figsize=(11, 5))
     if ages.max() > LANDPLANT_MA:
@@ -662,7 +881,7 @@ def _figures(outd, ages, chosen, pcs, a):
     fig.tight_layout(); fig.savefig(outd / "fig3_sediment_flux_banded.png", dpi=200)
     plt.close(fig)
 
-    # ---- Figure 7 with a band ----------------------------------------------------
+    # ---- silicate sink against the pCO2 records, with a band ----------------------
     dd = Path(a.data_dir) if a.data_dir else HERE
     panels = [(nm, dd / f"{nm}.npy") for nm in ("foster", "judd")]
     panels = [(nm, np.load(p)) for nm, p in panels if p.exists()]
@@ -699,6 +918,8 @@ def _figures(outd, ages, chosen, pcs, a):
 # --------------------------------------------------------------------------------------
 
 def cmd_selftest(a):
+    """Synthetic checks of the interpolator, the curvature diagnostic, the
+    calibration and the stub surrogate.  Returns 0 if all pass, else 1."""
     ok = True
 
     def check(name, cond, detail=""):
@@ -766,6 +987,7 @@ def cmd_selftest(a):
 # --------------------------------------------------------------------------------------
 
 def main(argv=None):
+    """Command-line entry point: sub-commands nodes, sample and selftest."""
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -780,6 +1002,7 @@ def main(argv=None):
     q.add_argument("--ages", nargs="*")
     q.add_argument("--n-r", type=int, default=5)
     q.add_argument("--n-z", type=int, default=3)
+    # z nodes span +-z_max standard deviations of the climate-model spread
     q.add_argument("--z-max", type=float, default=2.5)
     q.add_argument("--device")
     q.add_argument("--stub-surrogate", action="store_true",
@@ -796,13 +1019,18 @@ def main(argv=None):
     q.add_argument("--envelope-csv")
     q.add_argument("--envelope-factor", type=float, default=1.5)
     q.add_argument("--envelope-data-dir")
+    # sigma components: internal variability, regression residual, model structure
     q.add_argument("--sigma-terms", default="int,fit,struct")
     q.add_argument("--runoff-scale-clip", type=float, nargs=2, default=[0.2, 5.0])
+    # epsilon in R/R_ref = (P'/P'_ref)**epsilon; 1 because the forcing channel is
+    # precipitation itself
     q.add_argument("--runoff-elasticity", type=float, default=1.0)
     q.add_argument("--runoff-coefficient", type=float, default=0.4)
+    # erosion scaling factor of the main model (sediment-flux calibrated) and the
+    # silicate and sulfide amplitude factors of the weathering step
     q.add_argument("--erate-scale", type=float, default=2.0)
     q.add_argument("--f-sil", type=float, default=2.4)
-    q.add_argument("--f-sulf", type=float, default=0.2)
+    q.add_argument("--f-sulf", type=float, default=0.1)
     q.add_argument("--regions", nargs="*", default=DEFAULT_REGIONS)
     q.set_defaults(func=cmd_nodes)
 
